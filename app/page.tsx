@@ -6,39 +6,10 @@ import {
   Terminal, Code2, Cpu, Globe, Users, Zap, 
   Layers, Ghost, Radio, ChevronDown, Github, Linkedin, 
   Play, X, Wifi, ShieldAlert, Database, Lock,
-  Calendar, Clock, Trophy, Gift, Star, Ticket, ArrowRight, ArrowLeft,Briefcase
+  Calendar, Clock, Trophy, Gift, Star, Ticket, ArrowRight, ArrowLeft, Briefcase,
+  Volume2, VolumeX
 } from 'lucide-react';
-import { Volume2, VolumeX } from 'lucide-react';
 
-const MusicToggle = () => {
-  const [isPlaying, setIsPlaying] = useState(true);
-
-  const handleToggle = () => {
-    bgMusic.toggle();
-    setIsPlaying(!isPlaying);
-  };
-
-  return (
-    <motion.button
-      initial={{ opacity: 0, scale: 0 }}
-      animate={{ opacity: 1, scale: 1 }}
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.9 }}
-      onClick={handleToggle}
-      className="fixed bottom-6 right-6 z-[100] p-4 bg-black/60 backdrop-blur-md border border-red-600/50 rounded-full text-red-500 hover:bg-red-900/40 hover:text-white hover:shadow-[0_0_20px_#E50914] transition-all duration-300 group"
-    >
-      {isPlaying ? <Volume2 size={24} /> : <VolumeX size={24} />}
-      
-      {/* Tooltip Effect */}
-      <span className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-black/90 text-red-500 text-xs font-tech tracking-widest px-3 py-1 rounded border border-red-900/50 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-        {isPlaying ? "MUTE SYSTEM AUDIO" : "ENABLE SYSTEM AUDIO"}
-      </span>
-    </motion.button>
-  );
-};
-
-// --- AUDIO SYSTEM (Local File Support) ---
-// --- AUDIO SYSTEM (Upgraded) ---
 // --- AUDIO SYSTEM (TypeScript Fixed) ---
 class AudioController {
   // 1. Declare properties with types
@@ -127,13 +98,38 @@ class AudioController {
   }
 }
 
-// Usage: Create the instance with your file path
-// Ensure 'theme.mp3' is inside your 'public' folder!
+// Global Audio Instance
 const bgMusic = new AudioController('/stranger-things-124008.mp3');
 
-// --- 3D BACKGROUND (Vanilla Three.js) ---
+// --- COMPONENTS ---
+
+const MusicToggle = () => {
+  const [isPlaying, setIsPlaying] = useState(true);
+
+  const handleToggle = () => {
+    bgMusic.toggle();
+    setIsPlaying(!isPlaying);
+  };
+
+  return (
+    <motion.button
+      initial={{ opacity: 0, scale: 0 }}
+      animate={{ opacity: 1, scale: 1 }}
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.9 }}
+      onClick={handleToggle}
+      className="fixed bottom-6 right-6 z-[100] p-4 bg-black/60 backdrop-blur-md border border-red-600/50 rounded-full text-red-500 hover:bg-red-900/40 hover:text-white hover:shadow-[0_0_20px_#E50914] transition-all duration-300 group"
+    >
+      {isPlaying ? <Volume2 size={24} /> : <VolumeX size={24} />}
+      <span className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-black/90 text-red-500 text-xs font-tech tracking-widest px-3 py-1 rounded border border-red-900/50 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+        {isPlaying ? "MUTE SYSTEM AUDIO" : "ENABLE SYSTEM AUDIO"}
+      </span>
+    </motion.button>
+  );
+};
+
 const BackgroundScene = () => {
-  const mountRef = useRef(null);
+  const mountRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!mountRef.current) return;
@@ -190,7 +186,7 @@ const BackgroundScene = () => {
     // 4. Interaction
     let mouseX = 0;
     let mouseY = 0;
-    const handleMouseMove = (event) => {
+    const handleMouseMove = (event: MouseEvent) => {
       mouseX = (event.clientX / window.innerWidth) * 2 - 1;
       mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
     };
@@ -203,7 +199,7 @@ const BackgroundScene = () => {
     };
     window.addEventListener('resize', handleResize);
 
-    let frameId;
+    let frameId: number;
     const animate = () => {
       frameId = requestAnimationFrame(animate);
       stars.rotation.y -= 0.0005;
@@ -232,7 +228,6 @@ const BackgroundScene = () => {
 
   return (
     <div className="fixed inset-0 z-0">
-        {/* Main Background Image - RESTORED TO ORIGINAL NETFLIX PHOTO */}
         <div 
           className="absolute inset-0 bg-cover bg-center opacity-60 mix-blend-hard-light transition-opacity duration-1000"
           style={{ 
@@ -246,15 +241,13 @@ const BackgroundScene = () => {
   );
 };
 
-// --- STORY COMPONENTS ---
-
 const FilmGrain = () => (
   <div className="fixed inset-0 z-[60] pointer-events-none opacity-[0.08] mix-blend-overlay"
        style={{ backgroundImage: `url("https://upload.wikimedia.org/wikipedia/commons/7/76/Noise.png")` }}>
   </div>
 );
 
-const StoryBridge = ({ text }) => {
+const StoryBridge = ({ text }: any) => {
   return (
     <motion.div 
       initial={{ opacity: 0, y: 50 }}
@@ -270,11 +263,11 @@ const StoryBridge = ({ text }) => {
   );
 };
 
-const SectionHeading = ({ chapter, title, subtitle, align = "center" }) => (
+const SectionHeading = ({ chapter, title, subtitle, align = "center" }: any) => (
   <div 
     className={`flex flex-col ${
       align === "left" 
-        ? "items-start text-left pl-5 md:pl-12" // <--- Added Padding here for left align
+        ? "items-start text-left pl-5 md:pl-12" 
         : "items-center text-center"
     } justify-center mb-16 z-10 relative w-full`}
   >
@@ -310,15 +303,15 @@ const SectionHeading = ({ chapter, title, subtitle, align = "center" }) => (
 
 // --- TERMINAL ---
 
-const TerminalModal = ({ isOpen, onClose }) => {
+const TerminalModal = ({ isOpen, onClose }: any) => {
   const [text, setText] = useState('');
   const [stage, setStage] = useState(0); 
   const [teamName, setTeamName] = useState('');
   
-  // --- AUDIO REFS ---
-  const typingAudioRef = useRef(null);
-  const lockInAudioRef = useRef(null);
-  const statusAudioRef = useRef(null);
+  // Audio Refs
+  const typingAudioRef = useRef<HTMLAudioElement | null>(null);
+  const lockInAudioRef = useRef<HTMLAudioElement | null>(null);
+  const statusAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const [members, setMembers] = useState([
     { name: '', phone: '', email: '' },
@@ -421,13 +414,14 @@ const TerminalModal = ({ isOpen, onClose }) => {
     }
   }, [isOpen, stage]);
 
-  const handleMemberChange = (index, field, value) => {
+  const handleMemberChange = (index: number, field: string, value: string) => {
     const newMembers = [...members];
+    // @ts-ignore
     newMembers[index] = { ...newMembers[index], [field]: value };
     setMembers(newMembers);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: any) => {
     e.preventDefault();
     if (lockInAudioRef.current) {
         lockInAudioRef.current.currentTime = 0;
@@ -553,13 +547,9 @@ const TerminalModal = ({ isOpen, onClose }) => {
                  >
                    <div className="absolute inset-0 bg-red-600/10 animate-pulse pointer-events-none" />
                    
-                   {/* STRATEGICALLY PLACED IMAGE */}
                    <div className="relative w-32 h-32 md:w-40 md:h-40 mx-auto mb-6 rounded-lg overflow-hidden border-2 border-red-500 shadow-[0_0_30px_rgba(220,38,38,0.4)]">
-                        {/* Red Overlay Effect */}
                         <div className="absolute inset-0 bg-red-500/30 mix-blend-multiply z-10" />
-                        {/* Scanline Overlay */}
                         <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.5)_50%)] bg-[length:100%_4px] z-20 pointer-events-none" />
-                        
                         <img 
                             src="https://upload.wikimedia.org/wikipedia/en/thumb/d/df/Vecna_%28Stranger_Things%29.jpg/250px-Vecna_%28Stranger_Things%29.jpg" 
                             alt="Vecna" 
@@ -592,49 +582,43 @@ const TerminalModal = ({ isOpen, onClose }) => {
     </AnimatePresence>
   );
 };
+
 // --- DOMAIN CAROUSEL ---
 
 const tracks = [
   { 
     title: "Shadow Tech", 
     desc: "AI/ML solutions to detect anomalies in data streams.", 
-    // Image: Red lightning storm (resembling the Mind Flayer/Red Sky)
     image: "https://images.unsplash.com/photo-1605727216801-e27ce1d0cc28?q=80&w=2671&auto=format&fit=crop" 
   }, 
   { 
     title: "Void Comm", 
     desc: "Mesh networking apps for offline communication.", 
-    // Image: Dark, reflective black water (resembling Eleven's Void)
     image: "https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?q=80&w=2674&auto=format&fit=crop" 
   }, 
   { 
     title: "Mind Block", 
     desc: "Cybersecurity defense against brute-force attacks.", 
-    // Image: Retro sci-fi control panel (resembling Hawkins Lab)
     image: "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=2670&auto=format&fit=crop" 
   }, 
   { 
     title: "Hive Data", 
     desc: "Distributed storage for massive paranormal datasets.", 
-    // Image: Red organic nerve/root texture (resembling the Hive Mind vines)
     image: "https://images.unsplash.com/photo-1618193139062-2c5bf4f935b7?q=80&w=2670&auto=format&fit=crop" 
   }, 
   { 
     title: "Portal Dev", 
     desc: "Full-stack gateways linking our world to the next.", 
-    // Image: Glowing orange/red light in darkness (resembling The Gate)
     image: "https://images.unsplash.com/photo-1542256844-311b7029598a?q=80&w=2669&auto=format&fit=crop" 
   }, 
   { 
     title: "Strange Matter", 
     desc: "Open innovation and hardware to close the gate.", 
-    // Image: Spooky blue misty forest (resembling the Upside Down)
     image: "https://images.unsplash.com/photo-1511447333015-45b65e60f6d5?q=80&w=2755&auto=format&fit=crop" 
   }, 
 ];
 
-const TrackCard = ({ image, title, desc, position, onClick }) => {
-  // Enhanced variants for smoother "Cover Flow" feel
+const TrackCard = ({ image, title, desc, position, onClick }: any) => {
   const variants = {
     center: { x: "0%", scale: 1, zIndex: 50, opacity: 1, filter: "blur(0px) brightness(1)", rotateY: 0 },
     left1: { x: "-50%", scale: 0.8, zIndex: 30, opacity: 0.7, filter: "blur(2px) brightness(0.6)", rotateY: 25 },
@@ -657,19 +641,17 @@ const TrackCard = ({ image, title, desc, position, onClick }) => {
     <motion.div
       animate={getVariant()}
       variants={variants}
-      transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }} // Smooth ease-out-quad
+      transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }} 
       onClick={onClick}
       className="absolute top-1/2 left-1/2 w-[350px] md:w-[600px] h-[400px] md:h-[450px] -translate-x-1/2 -translate-y-1/2 border border-red-900/50 bg-gray-900 backdrop-blur-md overflow-hidden rounded-2xl flex flex-col shadow-2xl cursor-pointer"
       style={{ transformStyle: 'preserve-3d' }}
     >
-      {/* Background Image with Fallback Color */}
       <div 
         className="absolute inset-0 bg-cover bg-center transition-transform duration-700 bg-gray-900"
         style={{ backgroundImage: `url(${image})` }}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
       
-      {/* Content */}
       <div className="relative z-10 flex flex-col justify-end h-full p-8 gap-4">
         <h3 className="text-3xl md:text-5xl font-bold text-white font-benguiat drop-shadow-[0_4px_8px_rgba(0,0,0,1)] border-b-4 border-red-600 pb-4 inline-block w-fit">
           {title}
@@ -700,9 +682,7 @@ const DomainCarousel = () => {
   const nextTrack = () => setActiveIndex((prev) => (prev + 1) % tracks.length);
   const prevTrack = () => setActiveIndex((prev) => (prev - 1 + tracks.length) % tracks.length);
 
-  // Circular logic to determine position relative to active index
-  // Returns integers like -2, -1, 0, 1, 2
-  const getPosition = (index) => {
+  const getPosition = (index: number) => {
     const len = tracks.length;
     let offset = (index - activeIndex + len) % len;
     if (offset > len / 2) offset -= len;
@@ -715,7 +695,6 @@ const DomainCarousel = () => {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* 3D Perspective Container */}
       <div className="relative h-[500px] w-full max-w-6xl mx-auto flex items-center justify-center perspective-1000" style={{ perspective: '1000px' }}>
         {tracks.map((track, index) => (
           <TrackCard 
@@ -727,7 +706,6 @@ const DomainCarousel = () => {
         ))}
       </div>
 
-      {/* Navigation Buttons */}
       <div className="flex gap-12 mt-12 z-50">
         <button onClick={prevTrack} className="p-4 rounded-full bg-red-950/50 border border-red-600 text-white hover:bg-red-600 transition-all duration-300 transform hover:scale-110 shadow-[0_0_20px_rgba(229,9,20,0.3)]">
           <ArrowLeft size={36} />
@@ -740,7 +718,7 @@ const DomainCarousel = () => {
   );
 };
 
-const TimelineItem = ({ time, title, desc, align }) => (
+const TimelineItem = ({ time, title, desc, align }: any) => (
   <motion.div 
     initial={{ opacity: 0, y: 50 }}
     whileInView={{ opacity: 1, y: 0 }}
@@ -756,7 +734,6 @@ const TimelineItem = ({ time, title, desc, align }) => (
          <h3 className="text-3xl font-bold text-red-500 font-benguiat tracking-wide group-hover:text-red-400 transition-colors">{title}</h3>
          <p className="text-gray-300 text-lg mt-3 font-mono">{desc}</p>
          
-         {/* Decorative Glowing Dots */}
          <div className={`absolute top-1/2 -translate-y-1/2 w-6 h-6 bg-black border-2 border-red-600 shadow-[0_0_15px_#E50914] rounded-full hidden md:flex items-center justify-center ${align === 'right' ? '-left-[59px]' : '-right-[59px]'}`}>
             <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
          </div>
@@ -768,7 +745,6 @@ const TimelineItem = ({ time, title, desc, align }) => (
     </div>
     
     <div className={`flex-1 text-center ${align === 'right' ? 'md:text-right' : 'md:text-left'}`}>
-      {/* --- UPDATED SIZE HERE --- */}
       <span className="font-tech text-4xl md:text-6xl text-white font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-600 drop-shadow-[0_0_10px_rgba(229,9,20,0.5)]">
         {time}
       </span>
@@ -776,8 +752,7 @@ const TimelineItem = ({ time, title, desc, align }) => (
   </motion.div>
 );
 
-const PrizeCard = ({ rank, title, prize, color, scale = 1 }) => {
-  // Map simple color names to specific Tailwind colors for shadows/glows
+const PrizeCard = ({ rank, title, prize, color, scale = 1 }: any) => {
   const themeColor = color === 'yellow' ? 'text-yellow-400' : (rank === 2 ? 'text-gray-300' : 'text-orange-700');
   const glowColor = color === 'yellow' ? 'rgba(234, 179, 8, 0.6)' : (rank === 2 ? 'rgba(209, 213, 219, 0.4)' : 'rgba(194, 65, 12, 0.5)');
   const borderColor = color === 'yellow' ? 'border-yellow-500/50' : (rank === 2 ? 'border-gray-400/50' : 'border-orange-700/50');
@@ -792,24 +767,18 @@ const PrizeCard = ({ rank, title, prize, color, scale = 1 }) => {
       style={{ transform: `scale(${scale})`, zIndex: rank === 1 ? 50 : 20 }}
     >
       
-      {/* 1. The "Containment Field" Background */}
       <div className={`absolute inset-0 bg-gray-900/90 backdrop-blur-xl border ${borderColor} clip-path-polygon shadow-2xl overflow-hidden`}>
-        {/* Grid Texture Overlay */}
         <div className="absolute inset-0 opacity-20 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:30px_30px]" />
         
-        {/* Massive Rank Watermark */}
         <span className={`absolute -right-4 -bottom-16 text-[12rem] font-black text-white/5 font-serif select-none leading-none z-0 group-hover:text-white/10 transition-colors duration-500`}>
           0{rank}
         </span>
 
-        {/* Top Glowing "Portal" Light */}
         <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-red-900/40 to-transparent opacity-50" />
       </div>
 
-      {/* 2. Content Container */}
       <div className="relative z-10 flex flex-col items-center justify-between w-full h-full p-8">
         
-        {/* Trophy Section with "Energy Field" */}
         <div className="relative mt-4">
           <motion.div 
             animate={{ rotate: 360 }}
@@ -822,11 +791,9 @@ const PrizeCard = ({ rank, title, prize, color, scale = 1 }) => {
           </div>
         </div>
 
-        {/* Text Details */}
         <div className="text-center mt-6 space-y-2">
             <h3 className="text-2xl font-serif text-gray-300 uppercase tracking-widest">{title}</h3>
             
-            {/* Glitchy/Tech Prize Amount */}
             <div className="relative py-2">
                 <div className={`text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-gray-500 drop-shadow-lg font-mono tracking-tighter`}>
                 {prize}
@@ -835,7 +802,6 @@ const PrizeCard = ({ rank, title, prize, color, scale = 1 }) => {
             </div>
         </div>
 
-        {/* Data/Perks List - Styled as "System Logs" */}
         <div className="w-full mt-8 pt-6 border-t border-dashed border-white/20">
           <ul className="space-y-4 font-mono text-sm text-gray-400">
             <PerkItem icon={Star} text="Certificate of Valor" delay={0.1} />
@@ -845,7 +811,6 @@ const PrizeCard = ({ rank, title, prize, color, scale = 1 }) => {
         </div>
       </div>
 
-      {/* 3. The "Scanner" Line Effect on Hover */}
       <motion.div 
         className="absolute top-0 left-0 w-full h-1 bg-white/50 shadow-[0_0_20px_rgba(255,255,255,0.8)] z-50 pointer-events-none opacity-0 group-hover:opacity-100"
         initial={{ y: -10 }}
@@ -856,8 +821,7 @@ const PrizeCard = ({ rank, title, prize, color, scale = 1 }) => {
   );
 };
 
-// Helper for animated list items
-const PerkItem = ({ icon: Icon, text, delay }) => (
+const PerkItem = ({ icon: Icon, text, delay }: any) => (
   <motion.li 
     initial={{ x: -10, opacity: 0 }}
     whileInView={{ x: 0, opacity: 1 }}
@@ -873,10 +837,87 @@ const PerkItem = ({ icon: Icon, text, delay }) => (
   </motion.li>
 );
 
+// --- FOOTER COMPONENTS ---
 
+const OrganizersFooter = () => {
+  return (
+    <footer className="relative pt-40 pb-24 overflow-hidden">
+      
+      <div className="absolute inset-0 pointer-events-none">
+         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/80 to-[#0a0000]" />
+         <div className="absolute bottom-[-30%] left-1/2 -translate-x-1/2 w-[180%] h-[100%] bg-[radial-gradient(ellipse_at_bottom,_var(--tw-gradient-stops))] from-red-600/50 via-red-900/20 to-transparent blur-[150px] mix-blend-screen" />
+         <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-red-900/30 to-transparent blur-3xl" />
+      </div>
 
-// --- MAIN APPLICATION ---
+      <div className="relative z-10 container mx-auto px-4 text-center">
+        
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 0.8, y: 0 }}
+          whileHover={{ opacity: 1, scale: 1.05, filter: "drop-shadow(0 0 20px rgba(220,38,38,0.8))" }}
+          className="mb-20 inline-block cursor-pointer transition-all duration-500"
+        >
+           <img 
+             src="https://upload.wikimedia.org/wikipedia/commons/3/38/Stranger_Things_logo.png" 
+             alt="Stranger Things" 
+             className="h-14 md:h-20 object-contain drop-shadow-[0_0_25px_rgba(220,38,38,0.6)]" 
+           />
+        </motion.div>
 
+        <div className="flex items-center justify-center gap-4 mb-20">
+          <div className="h-[2px] w-16 bg-gradient-to-r from-transparent to-red-500 shadow-[0_0_10px_#ef4444]" />
+          <span className="text-red-400 font-tech tracking-[0.5em] text-base uppercase drop-shadow-[0_0_10px_rgba(220,38,38,0.8)]">Orchestrated By</span>
+          <div className="h-[2px] w-16 bg-gradient-to-l from-transparent to-red-500 shadow-[0_0_10px_#ef4444]" />
+        </div>
+
+        <div className="flex flex-wrap justify-center items-center gap-20 md:gap-40 mb-24">
+           <ClubEntity name="CSI-COMPS" delay={0} />
+           <ClubEntity name="CSI-IT" delay={1} />
+           <ClubEntity name="AIDL" delay={2} />
+        </div>
+
+        <div className="flex justify-center gap-12 mb-16">
+          <SocialLink icon={Github} />
+          <SocialLink icon={Linkedin} />
+          <SocialLink icon={Globe} />
+        </div>
+
+        <p className="font-mono text-red-500/70 text-sm tracking-[0.2em] uppercase drop-shadow-sm">
+          FCRIT VASHI <span className="text-red-600 mx-2">//</span> 2026 <br/> HACKQUINOX 2.0
+        </p>
+      </div>
+    </footer>
+  );
+};
+
+const ClubEntity = ({ name, delay }: any) => (
+  <motion.div 
+    animate={{ y: [-10, 10, -10] }} 
+    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: delay }}
+    className="group relative flex flex-col items-center justify-center"
+  >
+    <div className="relative w-24 h-24 md:w-32 md:h-32 flex items-center justify-center transition-all duration-500 grayscale group-hover:grayscale-0 group-hover:drop-shadow-[0_0_25px_rgba(220,38,38,0.8)] opacity-70 group-hover:opacity-100">
+       <img 
+         src={`https://placehold.co/150x150/000000/FFFFFF/png?text=${name}`} 
+         alt={`${name} Logo`} 
+         className="w-full h-full object-contain mix-blend-screen" 
+       />
+    </div>
+    <div className="absolute -bottom-8 w-24 h-4 bg-red-600/30 blur-xl rounded-[100%] opacity-0 group-hover:opacity-100 transition-opacity duration-500 scale-x-0 group-hover:scale-x-100" />
+    <span className="mt-6 font-benguiat text-gray-500 group-hover:text-red-500 tracking-widest transition-colors duration-300">
+      {name}
+    </span>
+  </motion.div>
+);
+
+const SocialLink = ({ icon: Icon }: any) => (
+  <a href="#" className="text-gray-600 hover:text-white transition-colors duration-300 group relative">
+    <Icon size={24} />
+    <span className="absolute -inset-2 bg-red-500/20 blur-lg rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+  </a>
+);
+
+// --- MAIN APP EXPORT ---
 export default function App() {
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [showTerminal, setShowTerminal] = useState(false);
@@ -1069,7 +1110,7 @@ export default function App() {
 
         {/* PRIZES SECTION */}
         <section className="py-20 px-6 w-full relative overflow-hidden">
-           {/* Background Image: Retro Crew/Friends (Unsplash) */}
+           {/* Background Image */}
            <div 
               className="absolute inset-0 bg-cover bg-center opacity-20 mix-blend-overlay pointer-events-none"
               style={{ backgroundImage: `url('https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=2670&auto=format&fit=crop')` }}
@@ -1097,17 +1138,14 @@ export default function App() {
 
         {/* REGISTRATION CTA */}
         <section className="py-32 px-6 w-full relative">
-           {/* Background Container with "Villain" aesthetic (Unsplash) */}
            <div className="w-full relative overflow-hidden group rounded-3xl text-center shadow-[0_0_50px_rgba(229,9,20,0.3)] max-w-7xl mx-auto">
-              {/* Image Layer */}
               <div 
                 className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
                 style={{ 
                   backgroundImage: `url('https://images.unsplash.com/photo-1509248961158-e54f6934749c?q=80&w=2537&auto=format&fit=crop')`,
-                  filter: 'grayscale(100%) contrast(1.2) brightness(0.5)' // Make it dark/scary
+                  filter: 'grayscale(100%) contrast(1.2) brightness(0.5)' 
                 }}
               />
-              {/* Red Overlay Gradient */}
               <div className="absolute inset-0 bg-gradient-to-r from-red-900/80 to-black/80 mix-blend-multiply" />
               
               <div className="relative z-10 p-12 md:p-24 flex flex-col items-center">
@@ -1128,116 +1166,8 @@ export default function App() {
 
         {/* ORGANIZERS FOOTER */}
         <OrganizersFooter />
+        
       </main>
     </div>
-    
   );
-  
 }
-// --- FOOTER COMPONENTS ---
-
-// --- FOOTER COMPONENTS (Paste this at the very bottom of your file) ---
-
-const OrganizersFooter = () => {
-  return (
-    <footer className="relative pt-40 pb-24 overflow-hidden">
-      
-      {/* --- ATMOSPHERIC GLOW --- */}
-      <div className="absolute inset-0 pointer-events-none">
-         {/* 1. Deep dark base gradient */}
-         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/80 to-[#0a0000]" />
-         
-         {/* 2. Massive Red "Pit" Glow rising from the bottom */}
-         <div className="absolute bottom-[-30%] left-1/2 -translate-x-1/2 w-[180%] h-[100%] bg-[radial-gradient(ellipse_at_bottom,_var(--tw-gradient-stops))] from-red-600/50 via-red-900/20 to-transparent blur-[150px] mix-blend-screen" />
-         
-         {/* 3. Subtle top rim light */}
-         <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-red-900/30 to-transparent blur-3xl" />
-      </div>
-
-      <div className="relative z-10 container mx-auto px-4 text-center">
-        
-        {/* Stranger Things Logo */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 0.8, y: 0 }}
-          whileHover={{ opacity: 1, scale: 1.05, filter: "drop-shadow(0 0 20px rgba(220,38,38,0.8))" }}
-          className="mb-20 inline-block cursor-pointer transition-all duration-500"
-        >
-           <img 
-             src="https://upload.wikimedia.org/wikipedia/commons/3/38/Stranger_Things_logo.png" 
-             alt="Stranger Things" 
-             className="h-14 md:h-20 object-contain drop-shadow-[0_0_25px_rgba(220,38,38,0.6)]" 
-           />
-        </motion.div>
-
-        {/* Section Title */}
-        <div className="flex items-center justify-center gap-4 mb-20">
-          <div className="h-[2px] w-16 bg-gradient-to-r from-transparent to-red-500 shadow-[0_0_10px_#ef4444]" />
-          <span className="text-red-400 font-tech tracking-[0.5em] text-base uppercase drop-shadow-[0_0_10px_rgba(220,38,38,0.8)]">Orchestrated By</span>
-          <div className="h-[2px] w-16 bg-gradient-to-l from-transparent to-red-500 shadow-[0_0_10px_#ef4444]" />
-        </div>
-
-        {/* 2. Floating Logos */}
-        <div className="flex flex-wrap justify-center items-center gap-20 md:gap-40 mb-24">
-           <ClubEntity name="CSI-COMPS" delay={0} />
-           <ClubEntity name="CSI-IT" delay={1} />
-           <ClubEntity name="AIDL" delay={2} />
-        </div>
-
-        {/* Social Links */}
-        <div className="flex justify-center gap-12 mb-16">
-          <SocialLink icon={Github} />
-          <SocialLink icon={Linkedin} />
-          <SocialLink icon={Globe} />
-        </div>
-
-        {/* Copyright */}
-        <p className="font-mono text-red-500/70 text-sm tracking-[0.2em] uppercase drop-shadow-sm">
-          FCRIT VASHI <span className="text-red-600 mx-2">//</span> 2026 <br/> HACKQUINOX 2.0
-        </p>
-      </div>
-    </footer>
-  );
-};
-
-// --- HELPER COMPONENT 1: CLUB ENTITY ---
-const ClubEntity = ({ name, delay }) => (
-  <motion.div 
-    animate={{ y: [-10, 10, -10] }} 
-    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: delay }}
-    className="group relative flex flex-col items-center justify-center"
-  >
-    <div className="relative w-24 h-24 md:w-32 md:h-32 flex items-center justify-center transition-all duration-500 grayscale group-hover:grayscale-0 group-hover:drop-shadow-[0_0_25px_rgba(220,38,38,0.8)] opacity-70 group-hover:opacity-100">
-       <img 
-         src={`https://placehold.co/150x150/000000/FFFFFF/png?text=${name}`} 
-         alt={`${name} Logo`} 
-         className="w-full h-full object-contain mix-blend-screen" 
-       />
-    </div>
-    <div className="absolute -bottom-8 w-24 h-4 bg-red-600/30 blur-xl rounded-[100%] opacity-0 group-hover:opacity-100 transition-opacity duration-500 scale-x-0 group-hover:scale-x-100" />
-    <span className="mt-6 font-benguiat text-gray-500 group-hover:text-red-500 tracking-widest transition-colors duration-300">
-      {name}
-    </span>
-  </motion.div>
-);
-
-// --- HELPER COMPONENT 2: SOCIAL LINK ---
-const SocialLink = ({ icon: Icon }) => (
-  <a href="#" className="text-gray-600 hover:text-white transition-colors duration-300 group relative">
-    <Icon size={24} />
-    <span className="absolute -inset-2 bg-red-500/20 blur-lg rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-  </a>
-);
-/*
-  // --- INSTALLATION COMMANDS ---
-  
-  // 1. Core Dependencies (Animations, 3D, Icons):
-  // npm install framer-motion three lucide-react
-
-  // 2. Tailwind CSS (Styling):
-  // npm install -D tailwindcss postcss autoprefixer
-  // npx tailwindcss init -p
-
-  // 3. Start Server:
-  // npm run dev
-*/

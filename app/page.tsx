@@ -39,57 +39,77 @@ const MusicToggle = () => {
 
 // --- AUDIO SYSTEM (Local File Support) ---
 // --- AUDIO SYSTEM (Upgraded) ---
+// --- AUDIO SYSTEM (TypeScript Fixed) ---
 class AudioController {
-  constructor(filePath : String) {
-    this.ctx = null;
-    this.audioElement = null;
-    this.sourceNode = null;
-    this.gainNode = null;
+  // 1. Declare properties with types
+  ctx: AudioContext | null = null;
+  audioElement: HTMLAudioElement | null = null;
+  sourceNode: MediaElementAudioSourceNode | null = null;
+  gainNode: GainNode | null = null;
+  filePath: string;
+  isPlaying: boolean = false;
+  baseVolume: number = 0.4;
+
+  constructor(filePath: string) {
     this.filePath = filePath;
-    this.isPlaying = false;
-    this.baseVolume = 0.4; // The normal volume level
   }
 
   init() {
     if (this.ctx) return;
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    this.ctx = new AudioContext();
+
+    // Handle browser differences (TypeScript safe way)
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    this.ctx = new AudioContextClass();
+
     this.audioElement = new Audio(this.filePath);
     this.audioElement.loop = true;
     this.audioElement.crossOrigin = "anonymous";
 
     try {
-        this.sourceNode = this.ctx.createMediaElementSource(this.audioElement);
-        this.gainNode = this.ctx.createGain();
-        this.sourceNode.connect(this.gainNode);
-        this.gainNode.connect(this.ctx.destination);
-        this.gainNode.gain.value = 0; 
+        if (this.ctx && this.audioElement) {
+            this.sourceNode = this.ctx.createMediaElementSource(this.audioElement);
+            this.gainNode = this.ctx.createGain();
+            
+            this.sourceNode.connect(this.gainNode);
+            this.gainNode.connect(this.ctx.destination);
+            this.gainNode.gain.value = 0; 
+        }
     } catch (e) {
-        console.error("Audio init error:", e);
+        console.error("Audio initialization error:", e);
     }
   }
 
   async play() {
     if (!this.ctx) this.init();
-    if (this.ctx.state === 'suspended') await this.ctx.resume();
+    
+    if (this.ctx && this.ctx.state === 'suspended') {
+      await this.ctx.resume();
+    }
+
     if (this.isPlaying) return;
 
     try {
-        await this.audioElement.play();
-        this.isPlaying = true;
-        this.fadeVolume(this.baseVolume, 3); // Fade in to normal
+        if (this.audioElement) {
+            await this.audioElement.play();
+            this.isPlaying = true;
+            this.fadeVolume(this.baseVolume, 3);
+        }
     } catch (err) {
         console.warn("Autoplay blocked", err);
     }
   }
 
   stop() {
-    if (!this.isPlaying || !this.ctx) return;
+    if (!this.isPlaying || !this.ctx || !this.gainNode || !this.audioElement) return;
+
     this.fadeVolume(0, 2);
+
     setTimeout(() => {
-      this.audioElement.pause();
-      this.audioElement.currentTime = 0;
-      this.isPlaying = false;
+      if (this.audioElement) {
+          this.audioElement.pause();
+          this.audioElement.currentTime = 0;
+          this.isPlaying = false;
+      }
     }, 2000);
   }
   
@@ -98,13 +118,11 @@ class AudioController {
       else this.play();
   }
 
-  // --- NEW METHOD: FADE VOLUME ---
-  fadeVolume(targetValue, duration) {
+  fadeVolume(targetValue: number, duration: number) {
     if (!this.gainNode || !this.ctx) return;
-    // Cancel any scheduled changes to avoid conflicts
+    
     this.gainNode.gain.cancelScheduledValues(this.ctx.currentTime);
     this.gainNode.gain.setValueAtTime(this.gainNode.gain.value, this.ctx.currentTime);
-    // Smoothly ramp to the new value
     this.gainNode.gain.linearRampToValueAtTime(targetValue, this.ctx.currentTime + duration);
   }
 }

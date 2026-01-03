@@ -40,7 +40,7 @@ const MusicToggle = () => {
 // --- AUDIO SYSTEM (Local File Support) ---
 // --- AUDIO SYSTEM (Upgraded) ---
 class AudioController {
-  constructor(filePath) {
+  constructor(filePath : String) {
     this.ctx = null;
     this.audioElement = null;
     this.sourceNode = null;

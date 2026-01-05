@@ -10,7 +10,57 @@ import {
   Volume2, VolumeX
 } from 'lucide-react';
 
-// --- AUDIO SYSTEM (TypeScript Fixed) ---
+// --- TYPES ---
+
+interface AudioControllerProps {
+  filePath: string;
+}
+
+interface Track {
+  title: string;
+  desc: string;
+  image: string;
+}
+
+interface TrackCardProps extends Track {
+  position: number;
+  onClick: () => void;
+}
+
+interface TimelineItemProps {
+  time: string;
+  title: string;
+  desc: string;
+  align: 'left' | 'right';
+}
+
+interface PrizeCardProps {
+  rank: number;
+  title: string;
+  prize: string;
+  // removed color prop as we are enforcing theme
+  scale?: number;
+}
+
+interface PerkItemProps {
+  icon: React.ElementType;
+  text: string;
+  delay: number;
+}
+
+interface ClubEntityProps {
+  name: string;
+  delay: number;
+}
+
+interface SectionHeadingProps {
+  chapter: string;
+  title: string;
+  subtitle?: string;
+  align?: 'center' | 'left';
+}
+
+// --- 1. AUDIO SYSTEM ---
 class AudioController {
   // 1. Declare properties with types
   ctx: AudioContext | null = null;
@@ -101,32 +151,137 @@ class AudioController {
 // Global Audio Instance
 const bgMusic = new AudioController('/stranger-things-124008.mp3');
 
-// --- COMPONENTS ---
+// --- 2. BASIC COMPONENTS ---
 
-const MusicToggle = () => {
-  const [isPlaying, setIsPlaying] = useState(true);
+const BriefcaseIcon = ({ size, className }: { size: number; className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+);
 
-  const handleToggle = () => {
-    bgMusic.toggle();
-    setIsPlaying(!isPlaying);
-  };
+const PerkItem: React.FC<PerkItemProps> = ({ icon: Icon, text, delay }) => (
+  <motion.li 
+    initial={{ x: -10, opacity: 0 }}
+    whileInView={{ x: 0, opacity: 1 }}
+    transition={{ delay }}
+    className="flex items-center gap-3 group/item"
+  >
+    <div className="p-1.5 rounded-sm bg-red-900/30 text-red-400 group-hover/item:bg-red-600 group-hover/item:text-white transition-colors duration-300 border border-red-900/50">
+      <Icon size={14} />
+    </div>
+    <span className="uppercase tracking-wider text-xs md:text-sm text-gray-400 group-hover/item:text-red-200 transition-colors font-mono">
+      {text}
+    </span>
+  </motion.li>
+);
 
+const SocialLink = ({ icon: Icon }: { icon: React.ElementType }) => (
+  <a href="#" className="text-gray-500 hover:text-red-500 transition-colors duration-300 group relative p-2">
+    <Icon size={24} />
+    <span className="absolute inset-0 bg-red-600/10 blur-md rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+  </a>
+);
+
+// REVISED CLUB ENTITY: Merged look, removed dark circle
+const ClubEntity: React.FC<ClubEntityProps> = ({ name, delay }) => (
+  <motion.div 
+    whileHover={{ y: -5, scale: 1.05 }}
+    className="group relative flex flex-col items-center justify-center cursor-pointer"
+  >
+    {/* Rotating "Portal" Rings - More Subtle */}
+    <div className="relative w-32 h-32 md:w-40 md:h-40 flex items-center justify-center">
+       
+       {/* Spinning outer ring - Red energy */}
+       <motion.div 
+         className="absolute inset-0 rounded-full border border-red-500/30 border-t-red-500 border-l-transparent"
+         animate={{ rotate: 360 }}
+         transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+       />
+       {/* Counter-spinning inner ring */}
+       <motion.div 
+         className="absolute inset-4 rounded-full border border-red-900/40 border-b-red-400 border-r-transparent"
+         animate={{ rotate: -360 }}
+         transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+       />
+
+       {/* Logo Image - Blended */}
+       <div className="relative z-10 w-20 h-20 md:w-24 md:h-24 opacity-80 group-hover:opacity-100 transition-all duration-300">
+         <img 
+           src={`https://placehold.co/150x150/000000/FFFFFF/png?text=${name}`} 
+           alt={`${name} Logo`} 
+           className="w-full h-full object-contain mix-blend-screen filter drop-shadow-[0_0_15px_rgba(220,38,38,0.4)]" 
+         />
+       </div>
+       
+       {/* Ambient Glow */}
+       <div className="absolute inset-0 bg-red-600/10 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+    </div>
+
+    <span className="mt-4 font-benguiat text-gray-500 group-hover:text-red-400 tracking-widest transition-colors duration-300 text-sm uppercase">
+      {name}
+    </span>
+  </motion.div>
+);
+
+const FilmGrain = () => (
+  <div className="fixed inset-0 z-[60] pointer-events-none opacity-[0.08] mix-blend-overlay"
+       style={{ backgroundImage: `url("https://upload.wikimedia.org/wikipedia/commons/7/76/Noise.png")` }}>
+  </div>
+);
+
+const StoryBridge = ({ text }: { text: string }) => {
   return (
-    <motion.button
-      initial={{ opacity: 0, scale: 0 }}
-      animate={{ opacity: 1, scale: 1 }}
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.9 }}
-      onClick={handleToggle}
-      className="fixed bottom-6 right-6 z-[100] p-4 bg-black/60 backdrop-blur-md border border-red-600/50 rounded-full text-red-500 hover:bg-red-900/40 hover:text-white hover:shadow-[0_0_20px_#E50914] transition-all duration-300 group"
+    <motion.div 
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 1 }}
+      viewport={{ margin: "-20% 0px -20% 0px" }}
+      className="py-32 px-6 max-w-4xl mx-auto flex justify-center text-center"
     >
-      {isPlaying ? <Volume2 size={24} /> : <VolumeX size={24} />}
-      <span className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-black/90 text-red-500 text-xs font-tech tracking-widest px-3 py-1 rounded border border-red-900/50 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-        {isPlaying ? "MUTE SYSTEM AUDIO" : "ENABLE SYSTEM AUDIO"}
-      </span>
-    </motion.button>
+      <p className="text-2xl md:text-3xl font-serif text-red-100/80 leading-relaxed italic tracking-wide">
+        "{text}"
+      </p>
+    </motion.div>
   );
 };
+
+const SectionHeading: React.FC<SectionHeadingProps> = ({ chapter, title, subtitle, align = "center" }) => (
+  <div 
+    className={`flex flex-col ${
+      align === "left" 
+        ? "items-start text-left pl-5 md:pl-12" 
+        : "items-center text-center"
+    } justify-center mb-16 z-10 relative w-full`}
+  >
+    <motion.span 
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      className="text-red-500 font-tech text-sm tracking-[0.4em] uppercase mb-4"
+    >
+      {chapter}
+    </motion.span>
+    <motion.h2 
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-b from-red-500 via-red-600 to-red-900 drop-shadow-[0_0_25px_rgba(229,9,20,0.6)] tracking-widest uppercase"
+      style={{ fontFamily: '"Merriweather", serif', WebkitTextStroke: '1px rgba(229,9,20,0.2)' }}
+    >
+      {title}
+    </motion.h2>
+    {subtitle && (
+      <motion.p 
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="text-gray-400 mt-4 font-mono tracking-widest uppercase text-sm"
+      >
+        <span className="text-red-600 mr-2">//</span>{subtitle}
+      </motion.p>
+    )}
+    <div className={`w-24 h-1 mt-6 shadow-[0_0_20px_#E50914] ${align === "left" ? "bg-gradient-to-r from-red-600 to-transparent" : "mx-auto bg-gradient-to-r from-transparent via-red-600 to-transparent"}`} />
+  </div>
+);
+
+// --- 3. BACKGROUND SCENE ---
 
 const BackgroundScene = () => {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -134,7 +289,6 @@ const BackgroundScene = () => {
   useEffect(() => {
     if (!mountRef.current) return;
 
-    // 1. Setup Scene
     const scene = new THREE.Scene();
     scene.fog = new THREE.FogExp2('#1a0505', 0.02); 
     
@@ -146,7 +300,6 @@ const BackgroundScene = () => {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     mountRef.current.appendChild(renderer.domElement);
 
-    // 2. Stars
     const starGeometry = new THREE.BufferGeometry();
     const starCount = 3000;
     const starPos = new Float32Array(starCount * 3);
@@ -163,7 +316,6 @@ const BackgroundScene = () => {
     const stars = new THREE.Points(starGeometry, starMaterial);
     scene.add(stars);
 
-    // 3. Spores
     const sporeGeometry = new THREE.BufferGeometry();
     const sporeCount = 1500;
     const sporePos = new Float32Array(sporeCount * 3);
@@ -183,7 +335,6 @@ const BackgroundScene = () => {
     spores.rotation.z = Math.PI / 4;
     scene.add(spores);
 
-    // 4. Interaction
     let mouseX = 0;
     let mouseY = 0;
     const handleMouseMove = (event: MouseEvent) => {
@@ -241,68 +392,8 @@ const BackgroundScene = () => {
   );
 };
 
-const FilmGrain = () => (
-  <div className="fixed inset-0 z-[60] pointer-events-none opacity-[0.08] mix-blend-overlay"
-       style={{ backgroundImage: `url("https://upload.wikimedia.org/wikipedia/commons/7/76/Noise.png")` }}>
-  </div>
-);
-
-const StoryBridge = ({ text }: any) => {
-  return (
-    <motion.div 
-      initial={{ opacity: 0, y: 50 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 1 }}
-      viewport={{ margin: "-20% 0px -20% 0px" }}
-      className="py-32 px-6 max-w-4xl mx-auto flex justify-center text-center"
-    >
-      <p className="text-2xl md:text-3xl font-serif text-red-100/80 leading-relaxed italic tracking-wide">
-        "{text}"
-      </p>
-    </motion.div>
-  );
-};
-
-const SectionHeading = ({ chapter, title, subtitle, align = "center" }: any) => (
-  <div 
-    className={`flex flex-col ${
-      align === "left" 
-        ? "items-start text-left pl-5 md:pl-12" 
-        : "items-center text-center"
-    } justify-center mb-16 z-10 relative w-full`}
-  >
-    <motion.span 
-      initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1 }}
-      className="text-red-500 font-tech text-sm tracking-[0.4em] uppercase mb-4"
-    >
-      {chapter}
-    </motion.span>
-    <motion.h2 
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-b from-red-500 via-red-600 to-red-900 drop-shadow-[0_0_25px_rgba(229,9,20,0.6)] tracking-widest uppercase"
-      style={{ fontFamily: '"Merriweather", serif', WebkitTextStroke: '1px rgba(229,9,20,0.2)' }}
-    >
-      {title}
-    </motion.h2>
-    {subtitle && (
-      <motion.p 
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className="text-gray-400 mt-4 font-mono tracking-widest uppercase text-sm"
-      >
-        <span className="text-red-600 mr-2">//</span>{subtitle}
-      </motion.p>
-    )}
-    <div className={`w-24 h-1 mt-6 shadow-[0_0_20px_#E50914] ${align === "left" ? "bg-gradient-to-r from-red-600 to-transparent" : "mx-auto bg-gradient-to-r from-transparent via-red-600 to-transparent"}`} />
-  </div>
-);
-
-// --- TERMINAL ---
-
+// --- 4. TERMINAL ---
+// --- TERMINAL MODAL (Updated with Scary Vecna Reveal) ---
 const TerminalModal = ({ isOpen, onClose }: any) => {
   const [text, setText] = useState('');
   const [stage, setStage] = useState(0); 
@@ -320,7 +411,7 @@ const TerminalModal = ({ isOpen, onClose }: any) => {
     { name: '', phone: '', email: '' }
   ]);
 
-  const fullText = "> CONNECTING TO FCRIT_SERVER_NODE_1...\n> VERIFYING PARTICIPANT ID...\n> ACCESS GRANTED.\n\nWELCOME TO HACKQUINOX 2.0\nINITIALIZE TEAM PROTOCOLS:";
+  const fullText = "> CONNECTING TO FCRIT_SERVER_NODE_1...\n> VERIFYING PARTICIPANT ID...\n> ACCESS GRANTED.\n\nWELCOME TO HACKQUINOX \nINITIALIZE TEAM PROTOCOLS:";
   
   useEffect(() => {
     // 1. Typing
@@ -344,7 +435,8 @@ const TerminalModal = ({ isOpen, onClose }: any) => {
   useEffect(() => {
     // STAGE 0: TYPING
     if (isOpen && stage === 0) {
-      bgMusic.fadeVolume(0.1, 0.5); 
+      // @ts-ignore
+      if (typeof bgMusic !== 'undefined') bgMusic.fadeVolume(0.1, 0.5); 
       if (typingAudioRef.current) {
           typingAudioRef.current.currentTime = 0;
           typingAudioRef.current.play().catch(() => {});
@@ -362,7 +454,8 @@ const TerminalModal = ({ isOpen, onClose }: any) => {
           clearInterval(interval);
           setStage(1);
           if (typingAudioRef.current) typingAudioRef.current.pause();
-          bgMusic.fadeVolume(0.4, 2.0); 
+           // @ts-ignore
+          if (typeof bgMusic !== 'undefined') bgMusic.fadeVolume(0.4, 2.0); 
         }
       }, 30); 
 
@@ -408,7 +501,8 @@ const TerminalModal = ({ isOpen, onClose }: any) => {
       setStage(0);
       setTeamName('');
       setMembers(Array(4).fill({ name: '', phone: '', email: '' }));
-      bgMusic.fadeVolume(0.4, 1.0);
+      // @ts-ignore
+      if (typeof bgMusic !== 'undefined') bgMusic.fadeVolume(0.4, 1.0);
       if (typingAudioRef.current) typingAudioRef.current.pause();
       if (statusAudioRef.current) statusAudioRef.current.pause();
     }
@@ -431,6 +525,10 @@ const TerminalModal = ({ isOpen, onClose }: any) => {
   };
 
   if (!isOpen) return null;
+
+  // CSS filter for the harsh red look
+  const harshRedFilter = 'brightness(0.8) contrast(2.5) grayscale(1) sepia(1) hue-rotate(-50deg) saturate(3)';
+  const vecnaImageUrl = "https://upload.wikimedia.org/wikipedia/en/thumb/d/df/Vecna_%28Stranger_Things%29.jpg/250px-Vecna_%28Stranger_Things%29.jpg";
 
   return (
     <AnimatePresence>
@@ -477,6 +575,7 @@ const TerminalModal = ({ isOpen, onClose }: any) => {
                     onSubmit={handleSubmit}
                     className="flex flex-col gap-8 pb-8"
                   >
+                    {/* ... (Inputs remain the same) ... */}
                     <div className="border border-red-800/50 p-6 bg-black/60 rounded-2xl backdrop-blur-md">
                       <h3 className="text-red-400 mb-4 border-b border-red-800 inline-block uppercase tracking-wider font-bold">01. Team Identity</h3>
                       <div className="flex flex-col gap-2">
@@ -538,30 +637,70 @@ const TerminalModal = ({ isOpen, onClose }: any) => {
                   ))}
                 </div>
                  
-                 {/* --- VECNA DOSSIER SECTION --- */}
+                 {/* --- UPDATED VECNA DOSSIER SECTION (SCARY VERSION) --- */}
                  <motion.div 
                    initial={{ opacity: 0, scale: 0.8 }}
                    animate={{ opacity: 1, scale: 1 }}
-                   transition={{ delay: 2.0, type: 'spring' }} 
-                   className="mt-12 p-6 border-2 border-red-600 bg-red-950/60 backdrop-blur-lg relative overflow-hidden group rounded-2xl w-full max-w-xl"
+                   transition={{ delay: 2.0, type: 'spring', bounce: 0.5 }} // Bouncier entrance
+                   className="mt-12 p-8 border-4 border-double border-red-600 bg-[#0a0000] relative overflow-hidden group rounded-sm w-full max-w-xl shadow-[0_0_50px_rgba(220,38,38,0.5)]"
                  >
-                   <div className="absolute inset-0 bg-red-600/10 animate-pulse pointer-events-none" />
+                   {/* Intense pulsing background */}
+                   <motion.div 
+                        animate={{ opacity: [0.1, 0.3, 0.1] }}
+                        transition={{ duration: 0.2, repeat: Infinity, repeatType: "reverse" }}
+                        className="absolute inset-0 bg-red-600/20 pointer-events-none" 
+                   />
                    
-                   <div className="relative w-32 h-32 md:w-40 md:h-40 mx-auto mb-6 rounded-lg overflow-hidden border-2 border-red-500 shadow-[0_0_30px_rgba(220,38,38,0.4)]">
-                        <div className="absolute inset-0 bg-red-500/30 mix-blend-multiply z-10" />
-                        <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.5)_50%)] bg-[length:100%_4px] z-20 pointer-events-none" />
-                        <img 
-                            src="https://upload.wikimedia.org/wikipedia/en/thumb/d/df/Vecna_%28Stranger_Things%29.jpg/250px-Vecna_%28Stranger_Things%29.jpg" 
-                            alt="Vecna" 
-                            className="object-cover w-full h-full grayscale contrast-125"
+                   {/* STRATEGICALLY PLACED IMAGE WITH RGB GLITCH */}
+                   <motion.div 
+                        // Violent shake entrance
+                        initial={{ x: 0 }}
+                        animate={{ x: [-10, 10, -5, 5, 0] }}
+                        transition={{ delay: 2.0, duration: 0.4, ease: "easeInOut" }}
+                        className="relative w-48 h-48 md:w-64 md:h-64 mx-auto mb-8 rounded-sm overflow-hidden border-2 border-red-500/80 shadow-[0_0_40px_rgba(220,38,38,0.6)] group-hover:scale-105 transition-transform duration-500"
+                    >
+                        {/* RGB Split Layers (The Glitch Effect) */}
+                        {/* Red Channel shift */}
+                        <motion.div 
+                             animate={{ x: [-2, 2, -1, 0], opacity: [0.5, 0.8, 0.5] }}
+                             transition={{ duration: 0.1, repeat: Infinity, repeatDelay: Math.random() * 2 }}
+                             className="absolute inset-0 z-10 mix-blend-screen opacity-50 pointer-events-none"
+                             style={{ 
+                                backgroundImage: `url('${vecnaImageUrl}')`, 
+                                backgroundSize: 'cover', 
+                                filter: `${harshRedFilter} drop-shadow(5px 0 0 red)`
+                             }} 
                         />
-                   </div>
+                        {/* Blue Channel shift */}
+                         <motion.div 
+                             animate={{ x: [2, -2, 1, 0], opacity: [0.5, 0.8, 0.5] }}
+                             transition={{ duration: 0.15, repeat: Infinity, repeatDelay: Math.random() * 3 }}
+                             className="absolute inset-0 z-10 mix-blend-screen opacity-50 pointer-events-none"
+                             style={{ 
+                                backgroundImage: `url('${vecnaImageUrl}')`, 
+                                backgroundSize: 'cover', 
+                                filter: `${harshRedFilter} drop-shadow(-5px 0 0 cyan)`
+                             }} 
+                        />
 
-                   <h3 className="text-red-500 font-black text-xl md:text-3xl uppercase tracking-widest mb-2 drop-shadow-lg">
-                     ⚠ TARGET LOCKED: VECNA
+                        {/* Main Base Image (Harsh contrast) */}
+                        <img 
+                            src={vecnaImageUrl}
+                            alt="Vecna" 
+                            className="relative z-0 object-cover w-full h-full"
+                            style={{ filter: harshRedFilter }}
+                        />
+                        
+                        {/* Heavy Scanline & Noise Overlay */}
+                        <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.7)_50%)] bg-[length:100%_3px] z-30 pointer-events-none opacity-70" />
+                        <div className="absolute inset-0 bg-[url('https://upload.wikimedia.org/wikipedia/commons/7/76/Noise.png')] opacity-20 mix-blend-overlay z-40 pointer-events-none" />
+                   </motion.div>
+
+                   <h3 className="text-red-500 font-black text-2xl md:text-4xl uppercase tracking-[0.2em] mb-4 drop-shadow-[0_0_15px_rgba(220,38,38,1)] animate-pulse leading-none">
+                     ⚠ CORRUPTION DETECTED: VECNA
                    </h3>
-                   <p className="text-red-400 font-mono text-sm tracking-wider">
-                     THE GATE IS OPEN. SEE YOU ON THE OTHER SIDE.
+                   <p className="text-red-300 font-mono text-base tracking-wider border-t border-red-800 pt-4">
+                     THE GATE IS OPEN. <br/> <span className="text-red-500 font-bold">RUN.</span>
                    </p>
                  </motion.div>
 
@@ -585,7 +724,7 @@ const TerminalModal = ({ isOpen, onClose }: any) => {
 
 // --- DOMAIN CAROUSEL ---
 
-const tracks = [
+const tracks: Track[] = [
   { 
     title: "Shadow Tech", 
     desc: "AI/ML solutions to detect anomalies in data streams.", 
@@ -618,7 +757,7 @@ const tracks = [
   }, 
 ];
 
-const TrackCard = ({ image, title, desc, position, onClick }: any) => {
+const TrackCard: React.FC<TrackCardProps> = ({ image, title, desc, position, onClick }) => {
   const variants = {
     center: { x: "0%", scale: 1, zIndex: 50, opacity: 1, filter: "blur(0px) brightness(1)", rotateY: 0 },
     left1: { x: "-50%", scale: 0.8, zIndex: 30, opacity: 0.7, filter: "blur(2px) brightness(0.6)", rotateY: 25 },
@@ -718,7 +857,7 @@ const DomainCarousel = () => {
   );
 };
 
-const TimelineItem = ({ time, title, desc, align }: any) => (
+const TimelineItem: React.FC<TimelineItemProps> = ({ time, title, desc, align }) => (
   <motion.div 
     initial={{ opacity: 0, y: 50 }}
     whileInView={{ opacity: 1, y: 0 }}
@@ -753,56 +892,98 @@ const TimelineItem = ({ time, title, desc, align }: any) => (
 );
 
 const PrizeCard = ({ rank, title, prize, color, scale = 1 }: any) => {
-  const themeColor = color === 'yellow' ? 'text-yellow-400' : (rank === 2 ? 'text-gray-300' : 'text-orange-700');
-  const glowColor = color === 'yellow' ? 'rgba(234, 179, 8, 0.6)' : (rank === 2 ? 'rgba(209, 213, 219, 0.4)' : 'rgba(194, 65, 12, 0.5)');
-  const borderColor = color === 'yellow' ? 'border-yellow-500/50' : (rank === 2 ? 'border-gray-400/50' : 'border-orange-700/50');
+  // Define colors based on rank
+  const isGold = color === 'yellow';
+  const isSilver = rank === 2;
+  
+  // Dynamic glow colors
+  const mainColor = isGold ? '#fbbf24' : isSilver ? '#94a3b8' : '#c2410c'; // Yellow / Slate / Orange
+  const glowShadow = `0 0 40px ${isGold ? 'rgba(251,191,36,0.4)' : isSilver ? 'rgba(148,163,184,0.3)' : 'rgba(194,65,12,0.4)'}`;
 
   return (
     <motion.div 
       initial={{ y: 0 }}
-      animate={{ y: [0, -20, 0] }}
+      animate={{ y: [0, -15, 0] }}
       transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: rank * 0.8 }}
-      whileHover={{ scale: scale * 1.05, y: -30 }}
-      className={`relative group flex flex-col items-center w-full md:w-1/3 min-h-[500px] rounded-sm transition-all duration-500`}
+      whileHover={{ scale: scale * 1.05, y: -25, zIndex: 100 }}
+      className="relative group flex flex-col items-center w-full md:w-1/3 min-h-[550px] rounded-xl transition-all duration-500 perspective-1000"
       style={{ transform: `scale(${scale})`, zIndex: rank === 1 ? 50 : 20 }}
     >
       
-      <div className={`absolute inset-0 bg-gray-900/90 backdrop-blur-xl border ${borderColor} clip-path-polygon shadow-2xl overflow-hidden`}>
-        <div className="absolute inset-0 opacity-20 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:30px_30px]" />
-        
-        <span className={`absolute -right-4 -bottom-16 text-[12rem] font-black text-white/5 font-serif select-none leading-none z-0 group-hover:text-white/10 transition-colors duration-500`}>
-          0{rank}
-        </span>
-
-        <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-red-900/40 to-transparent opacity-50" />
+      {/* 1. The "Plasma" Background Border */}
+      <div className="absolute -inset-[2px] bg-gradient-to-b from-gray-800 to-black rounded-xl z-0 overflow-hidden">
+         {/* Rotating Light Beam */}
+         <motion.div 
+            animate={{ rotate: 360 }}
+            transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-[-50%] bg-[conic-gradient(from_0deg,transparent_0deg,transparent_340deg,var(--tw-gradient-to)_360deg)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+            style={{ '--tw-gradient-to': mainColor } as any}
+         />
       </div>
 
-      <div className="relative z-10 flex flex-col items-center justify-between w-full h-full p-8">
+      {/* 2. Main Card Body */}
+      <div 
+        className="absolute inset-[1px] bg-black/90 backdrop-blur-xl rounded-xl overflow-hidden border border-white/10 group-hover:border-transparent transition-colors z-10"
+        style={{ boxShadow: "inset 0 0 40px rgba(0,0,0,0.8)" }}
+      >
+        {/* Grid & Noise Overlay */}
+        <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay pointer-events-none" />
         
-        <div className="relative mt-4">
+        {/* Massive Rank Watermark (Pulsing) */}
+        <motion.span 
+          animate={{ opacity: [0.05, 0.15, 0.05] }}
+          transition={{ duration: 3, repeat: Infinity }}
+          className="absolute -right-6 -bottom-12 text-[14rem] font-black text-white font-serif select-none leading-none z-0"
+          style={{ color: mainColor, filter: 'blur(2px)' }}
+        >
+          0{rank}
+        </motion.span>
+
+        {/* Top Glowing "Portal" Light */}
+        <div 
+            className="absolute top-0 left-0 right-0 h-48 bg-gradient-to-b from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" 
+            style={{ background: `linear-gradient(to bottom, ${mainColor}33, transparent)` }}
+        />
+      </div>
+
+      {/* 3. Content Container */}
+      <div className="relative z-20 flex flex-col items-center justify-between w-full h-full p-8 pt-12">
+        
+        {/* Floating Trophy */}
+        <div className="relative">
           <motion.div 
-            animate={{ rotate: 360 }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            className={`absolute inset-0 blur-2xl opacity-40 rounded-full`}
-            style={{ backgroundColor: glowColor }}
-          />
-          <div className="relative z-10 p-6 bg-black/50 border border-white/10 rounded-full shadow-[inset_0_0_20px_rgba(0,0,0,0.8)] backdrop-blur-md group-hover:border-white/30 transition-colors">
-            <Trophy size={48} className={`${themeColor} drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]`} />
-          </div>
+            animate={{ 
+                boxShadow: [
+                    `0 0 20px ${mainColor}00`, 
+                    `0 0 50px ${mainColor}66`, 
+                    `0 0 20px ${mainColor}00`
+                ] 
+            }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="relative z-10 p-6 bg-black/40 border border-white/10 rounded-full backdrop-blur-md"
+            style={{ borderColor: `${mainColor}44` }}
+          >
+            <Trophy size={56} style={{ color: mainColor, filter: `drop-shadow(0 0 10px ${mainColor})` }} />
+          </motion.div>
         </div>
 
-        <div className="text-center mt-6 space-y-2">
-            <h3 className="text-2xl font-serif text-gray-300 uppercase tracking-widest">{title}</h3>
+        {/* Text Details */}
+        <div className="text-center mt-8 space-y-4">
+            <h3 className="text-2xl font-serif text-gray-300 uppercase tracking-[0.2em] border-b border-white/10 pb-2">{title}</h3>
             
-            <div className="relative py-2">
-                <div className={`text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-gray-500 drop-shadow-lg font-mono tracking-tighter`}>
+            {/* Glowing Prize Text */}
+            <div className="relative py-2 group-hover:scale-110 transition-transform duration-300">
+                <div 
+                    className="text-5xl md:text-7xl font-black text-white drop-shadow-2xl font-mono tracking-tighter"
+                    style={{ textShadow: glowShadow }}
+                >
                 {prize}
                 </div>
-                <div className={`absolute -inset-1 opacity-0 group-hover:opacity-100 blur-lg transition-opacity duration-300`} style={{ backgroundColor: glowColor }} />
             </div>
         </div>
 
-        <div className="w-full mt-8 pt-6 border-t border-dashed border-white/20">
+        {/* Data/Perks List */}
+        <div className="w-full mt-10">
           <ul className="space-y-4 font-mono text-sm text-gray-400">
             <PerkItem icon={Star} text="Certificate of Valor" delay={0.1} />
             <PerkItem icon={Gift} text="Exclusive Swag Kit" delay={0.2} />
@@ -810,114 +991,91 @@ const PrizeCard = ({ rank, title, prize, color, scale = 1 }: any) => {
           </ul>
         </div>
       </div>
-
-      <motion.div 
-        className="absolute top-0 left-0 w-full h-1 bg-white/50 shadow-[0_0_20px_rgba(255,255,255,0.8)] z-50 pointer-events-none opacity-0 group-hover:opacity-100"
-        initial={{ y: -10 }}
-        whileHover={{ y: 500 }}
-        transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-      />
     </motion.div>
   );
 };
 
-const PerkItem = ({ icon: Icon, text, delay }: any) => (
-  <motion.li 
-    initial={{ x: -10, opacity: 0 }}
-    whileInView={{ x: 0, opacity: 1 }}
-    transition={{ delay }}
-    className="flex items-center gap-3 group/item"
-  >
-    <div className="p-1.5 rounded-sm bg-red-900/30 text-red-400 group-hover/item:bg-red-600 group-hover/item:text-white transition-colors duration-300">
-      <Icon size={14} />
-    </div>
-    <span className="uppercase tracking-wider text-xs md:text-sm group-hover/item:text-gray-200 transition-colors">
-      {text}
-    </span>
-  </motion.li>
-);
-
-// --- FOOTER COMPONENTS ---
-
 const OrganizersFooter = () => {
   return (
-    <footer className="relative pt-40 pb-24 overflow-hidden">
+    // REVERTED: Removed huge margin-top and solid bg blocker to restore blending
+    <footer className="relative pt-32 pb-24 overflow-hidden z-20"> 
       
-      <div className="absolute inset-0 pointer-events-none">
-         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/80 to-[#0a0000]" />
-         <div className="absolute bottom-[-30%] left-1/2 -translate-x-1/2 w-[180%] h-[100%] bg-[radial-gradient(ellipse_at_bottom,_var(--tw-gradient-stops))] from-red-600/50 via-red-900/20 to-transparent blur-[150px] mix-blend-screen" />
-         <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-red-900/30 to-transparent blur-3xl" />
-      </div>
+      {/* 1. Transparent Gradient to blend with section above */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/90 to-black pointer-events-none" />
+
+      {/* Atmospheric Red Fog at bottom */}
+      <div className="absolute bottom-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_bottom,_rgba(220,38,38,0.15),_transparent_70%)] pointer-events-none" />
 
       <div className="relative z-10 container mx-auto px-4 text-center">
         
+        {/* LOGO SECTION - Enhanced Visibility */}
         <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 0.8, y: 0 }}
-          whileHover={{ opacity: 1, scale: 1.05, filter: "drop-shadow(0 0 20px rgba(220,38,38,0.8))" }}
-          className="mb-20 inline-block cursor-pointer transition-all duration-500"
+          initial={{ opacity: 0, scale: 0.9 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1.5 }}
+          className="mb-24 relative inline-block group"
         >
-           <img 
-             src="https://upload.wikimedia.org/wikipedia/commons/3/38/Stranger_Things_logo.png" 
-             alt="Stranger Things" 
-             className="h-14 md:h-20 object-contain drop-shadow-[0_0_25px_rgba(220,38,38,0.6)]" 
-           />
+           {/* Darker Backing Circle to Isolate Logo */}
+           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-black/80 blur-3xl rounded-full" />
+           
+           {/* Red Ambient Glow (Subtle) */}
+           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[160%] h-[160%] bg-red-600/10 blur-[100px] rounded-full mix-blend-screen pointer-events-none" />
+           
+           {/* Huge Logo */}
+           
         </motion.div>
 
-        <div className="flex items-center justify-center gap-4 mb-20">
-          <div className="h-[2px] w-16 bg-gradient-to-r from-transparent to-red-500 shadow-[0_0_10px_#ef4444]" />
-          <span className="text-red-400 font-tech tracking-[0.5em] text-base uppercase drop-shadow-[0_0_10px_rgba(220,38,38,0.8)]">Orchestrated By</span>
-          <div className="h-[2px] w-16 bg-gradient-to-l from-transparent to-red-500 shadow-[0_0_10px_#ef4444]" />
+        <div className="flex items-center justify-center gap-4 mb-20 relative z-10">
+          <div className="h-[2px] w-16 bg-gradient-to-r from-transparent to-red-600 shadow-[0_0_10px_#ef4444]" />
+          <span className="text-red-400 font-tech tracking-[0.5em] text-base uppercase drop-shadow-md">Orchestrated By</span>
+          <div className="h-[2px] w-16 bg-gradient-to-l from-transparent to-red-600 shadow-[0_0_10px_#ef4444]" />
         </div>
 
-        <div className="flex flex-wrap justify-center items-center gap-20 md:gap-40 mb-24">
+        <div className="flex flex-wrap justify-center items-center gap-16 md:gap-32 mb-24 relative z-10">
            <ClubEntity name="CSI-COMPS" delay={0} />
            <ClubEntity name="CSI-IT" delay={1} />
            <ClubEntity name="AIDL" delay={2} />
         </div>
 
-        <div className="flex justify-center gap-12 mb-16">
+        <div className="flex justify-center gap-12 mb-10 relative z-10">
           <SocialLink icon={Github} />
           <SocialLink icon={Linkedin} />
           <SocialLink icon={Globe} />
         </div>
 
-        <p className="font-mono text-red-500/70 text-sm tracking-[0.2em] uppercase drop-shadow-sm">
-          FCRIT VASHI <span className="text-red-600 mx-2">//</span> 2026 <br/> HACKQUINOX 2.0
-        </p>
+        <div className="font-tech text-red-900/80 text-xs tracking-[0.3em] uppercase relative z-10">
+          FCRIT VASHI © 2026 <br/> HACKQUINOX
+        </div>
       </div>
     </footer>
   );
 };
 
-const ClubEntity = ({ name, delay }: any) => (
-  <motion.div 
-    animate={{ y: [-10, 10, -10] }} 
-    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: delay }}
-    className="group relative flex flex-col items-center justify-center"
-  >
-    <div className="relative w-24 h-24 md:w-32 md:h-32 flex items-center justify-center transition-all duration-500 grayscale group-hover:grayscale-0 group-hover:drop-shadow-[0_0_25px_rgba(220,38,38,0.8)] opacity-70 group-hover:opacity-100">
-       <img 
-         src={`https://placehold.co/150x150/000000/FFFFFF/png?text=${name}`} 
-         alt={`${name} Logo`} 
-         className="w-full h-full object-contain mix-blend-screen" 
-       />
-    </div>
-    <div className="absolute -bottom-8 w-24 h-4 bg-red-600/30 blur-xl rounded-[100%] opacity-0 group-hover:opacity-100 transition-opacity duration-500 scale-x-0 group-hover:scale-x-100" />
-    <span className="mt-6 font-benguiat text-gray-500 group-hover:text-red-500 tracking-widest transition-colors duration-300">
-      {name}
-    </span>
-  </motion.div>
-);
+const MusicToggle = () => {
+  const [isPlaying, setIsPlaying] = useState(true);
 
-const SocialLink = ({ icon: Icon }: any) => (
-  <a href="#" className="text-gray-600 hover:text-white transition-colors duration-300 group relative">
-    <Icon size={24} />
-    <span className="absolute -inset-2 bg-red-500/20 blur-lg rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-  </a>
-);
+  const handleToggle = () => {
+    bgMusic.toggle();
+    setIsPlaying(!isPlaying);
+  };
 
-// --- MAIN APP EXPORT ---
+  return (
+    <motion.button
+      initial={{ opacity: 0, scale: 0 }}
+      animate={{ opacity: 1, scale: 1 }}
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.9 }}
+      onClick={handleToggle}
+      className="fixed bottom-6 right-6 z-[100] p-4 bg-black/60 backdrop-blur-md border border-red-600/50 rounded-full text-red-500 hover:bg-red-900/40 hover:text-white hover:shadow-[0_0_20px_#E50914] transition-all duration-300 group"
+    >
+      {isPlaying ? <Volume2 size={24} /> : <VolumeX size={24} />}
+      <span className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-black/90 text-red-500 text-xs font-tech tracking-widest px-3 py-1 rounded border border-red-900/50 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+        {isPlaying ? "MUTE SYSTEM AUDIO" : "ENABLE SYSTEM AUDIO"}
+      </span>
+    </motion.button>
+  );
+};
+
 export default function App() {
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [showTerminal, setShowTerminal] = useState(false);
@@ -964,6 +1122,13 @@ export default function App() {
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #880000; border-radius: 4px; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        .clip-path-polygon {
+            clip-path: polygon(
+                20px 0, 100% 0, 
+                100% calc(100% - 20px), calc(100% - 20px) 100%, 
+                0 100%, 0 20px
+            );
+        }
       `}</style>
 
       {/* 2. CRT/VHS Overlay + Film Grain */}
@@ -1018,15 +1183,19 @@ export default function App() {
               Presents
             </motion.p>
             
-            <motion.h1 
-              initial={{ scale: 0.9, opacity: 0, textShadow: "0 0 0px #000" }}
-              animate={{ scale: 1, opacity: 1, textShadow: "0 0 30px rgba(229,9,20,0.5)" }}
-              transition={{ duration: 1.5, ease: "circOut" }}
-              className="text-6xl md:text-8xl lg:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-b from-red-500 via-red-600 to-red-900 font-benguiat uppercase tracking-tight leading-none mb-10 stroke-red-600"
-              style={{ WebkitTextStroke: '1px rgba(229,9,20,0.3)' }}
-            >
-              Hackquinox<br/><span className="text-4xl md:text-7xl">2.0</span>
-            </motion.h1>
+         <motion.h1 
+  initial={{ scale: 0.9, opacity: 0, textShadow: "0 0 0px #000" }}
+  animate={{ scale: 1, opacity: 1, textShadow: "0 0 30px rgba(229,9,20,0.5)" }}
+  transition={{ duration: 1.5, ease: "circOut" }}
+  className="text-6xl md:text-8xl lg:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-b from-red-500 via-red-600 to-red-900 font-benguiat uppercase tracking-tight leading-none mb-10 stroke-red-600"
+  style={{ WebkitTextStroke: '1px rgba(229,9,20,0.3)' }}
+>
+  Hackquinox<br/>
+  {/* UPDATED SPAN: Smaller size, wider spacing */}
+  <span className="text-lg md:text-3xl tracking-[0.3em] block mt-6 text-red-500 font-bold opacity-80">
+  HACK THE UPSIDE DOWN
+</span>
+</motion.h1>
 
             {!audioEnabled ? (
                <motion.button 
@@ -1088,12 +1257,11 @@ export default function App() {
         <section id="timeline-section" className="py-20 px-6 w-full relative">
            <SectionHeading chapter="Chapter Two" title="The Plan" subtitle="The Sequence of Events" align="left" />
            
-           <div className="relative mt-20 max-w-7xl mx-auto">
-              {/* Vertical Line */}
-              <div className="absolute top-0 left-1/2 w-1 h-full bg-red-900/30 -translate-x-1/2 hidden md:block">
-                 <div className="w-full h-full bg-red-600/50 animate-pulse shadow-[0_0_20px_#E50914]" />
+           <div className="relative mt-24 max-w-6xl mx-auto">
+              {/* Vertical Line - The Vein */}
+              <div className="absolute top-0 left-1/2 w-1 h-full bg-red-900/30 -translate-x-1/2 hidden md:block rounded-full">
+                 <div className="w-full h-full bg-gradient-to-b from-red-600/50 via-red-900/50 to-red-600/50 animate-pulse shadow-[0_0_20px_#E50914]" />
               </div>
-              <div className="absolute top-0 left-4 w-0.5 h-full bg-red-900/50 md:hidden" />
               
               <div className="space-y-24 md:space-y-32">
                 <TimelineItem time="09:00 AM" title="The Gathering" desc="Opening Ceremony & Problem Statement Reveal" align="left" />
@@ -1119,10 +1287,10 @@ export default function App() {
 
            <SectionHeading chapter="Chapter Three" title="Spoils of War" subtitle="Rewards" align="left" />
 
-           <div className="flex flex-col md:flex-row justify-center items-end gap-12 mb-24 w-full relative z-10 max-w-7xl mx-auto">
-              <PrizeCard rank={2} title="2nd Place" prize="₹15,000" color="red" scale={0.9} />
+           <div className="flex flex-col md:flex-row justify-center items-end gap-12 mb-24 w-full relative z-10 max-w-7xl mx-auto pt-10">
+              <PrizeCard rank={2} title="2nd Place" prize="₹15,000" color="silver" scale={0.9} />
               <PrizeCard rank={1} title="1st Place" prize="₹25,000" color="yellow" scale={1.1} />
-              <PrizeCard rank={3} title="3rd Place" prize="₹10,000" color="red" scale={0.9} />
+              <PrizeCard rank={3} title="3rd Place" prize="₹10,000" color="bronze" scale={0.9} />
            </div>
 
            <div className="bg-gradient-to-r from-red-900/10 via-red-900/30 to-red-900/10 border-y border-red-900/50 p-12 text-center w-full mx-auto rounded-3xl backdrop-blur-sm relative z-10 max-w-6xl">
@@ -1171,3 +1339,17 @@ export default function App() {
     </div>
   );
 }
+
+/*
+  // --- INSTALLATION COMMANDS ---
+  
+  // 1. Core Dependencies (Animations, 3D, Icons):
+  // npm install framer-motion three lucide-react
+
+  // 2. Tailwind CSS (Styling):
+  // npm install -D tailwindcss postcss autoprefixer
+  // npx tailwindcss init -p
+
+  // 3. Start Server:
+  // npm run dev
+*/

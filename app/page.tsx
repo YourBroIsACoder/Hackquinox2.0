@@ -1841,10 +1841,11 @@ const UpsideDownCursor = () => {
   const velocityY = useVelocity(springY);
 
   // Subtle rotation based on speed (kills jitter perception)
-  const dynamicRotate = useTransform(
-    [velocityX, velocityY],
-    ([vx, vy]) => Math.min(Math.hypot(vx, vy) / 45, 18)
-  );
+ const dynamicRotate = useTransform(
+  [velocityX, velocityY],
+  // FIX: Explicitly type the incoming array as 'any' or '[number, number]'
+  ([vx, vy]: any[]) => Math.min(Math.hypot(vx, vy) / 45, 18)
+);
 
   const [hovering, setHovering] = useState(false);
   const [visible, setVisible] = useState(false);

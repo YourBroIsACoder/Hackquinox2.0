@@ -155,14 +155,15 @@ class AudioController {
 const bgMusic = new AudioController('/stranger-things-124008.mp3');
 
 
+// --- PRELOADER (With Video Background) ---
 const Preloader = ({ onComplete }: { onComplete: () => void }) => {
   const [progress, setProgress] = useState(0);
   const [text, setText] = useState("INITIALIZING PROTOCOL...");
 
   useEffect(() => {
-    // Simulate loading progress
+    // 1. Simulate loading progress
     const timer = setInterval(() => {
-      setProgress(prev => {
+      setProgress((prev) => {
         const next = prev + Math.random() * 5;
         if (next >= 100) {
           clearInterval(timer);
@@ -172,12 +173,12 @@ const Preloader = ({ onComplete }: { onComplete: () => void }) => {
       });
     }, 50);
 
-    // Text sequence
+    // 2. Text sequence
     const t1 = setTimeout(() => setText("BYPASSING FIREWALL..."), 800);
     const t2 = setTimeout(() => setText("CONNECTING TO UPSIDE DOWN..."), 1800);
     const t3 = setTimeout(() => {
       setText("ACCESS GRANTED.");
-      onComplete();
+      onComplete(); // Triggers the exit
     }, 3000);
 
     return () => {
@@ -193,26 +194,46 @@ const Preloader = ({ onComplete }: { onComplete: () => void }) => {
       initial={{ opacity: 1 }}
       exit={{ opacity: 0, filter: "blur(20px)", scale: 1.1 }}
       transition={{ duration: 0.8, ease: "easeInOut" }}
-      className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center font-mono pointer-events-none"
+      className="fixed inset-0 z-[999] bg-black flex flex-col items-center justify-center font-mono overflow-hidden"
     >
-      <div className="w-full max-w-md px-6">
-        <h1 className="text-red-500 text-xl md:text-3xl font-black tracking-widest mb-8 animate-pulse text-center">
+      {/* --- NEW: VIDEO BACKGROUND LAYER --- */}
+      <div className="absolute inset-0 z-0">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            src="/video.mp4" 
+            className="w-full h-full object-cover mix-blend-screen"
+          />
+          {/* Dark Overlay to ensure text readability */}
+          <div className="absolute inset-0 bg-black/80" />
+      </div>
+
+      {/* --- CONTENT LAYER (Your Logic) --- */}
+      <div className="relative z-10 w-full max-w-md px-6">
+        <h1 className="text-red-500 text-xl md:text-3xl font-black tracking-widest mb-8 animate-pulse text-center drop-shadow-[0_0_10px_rgba(220,38,38,0.8)]">
           {text}
         </h1>
-        <div className="w-full h-2 bg-red-900/30 rounded-full overflow-hidden border border-red-900/50">
+        
+        {/* Progress Bar */}
+        <div className="w-full h-2 bg-red-900/30 rounded-full overflow-hidden border border-red-900/50 relative">
           <motion.div 
             className="h-full bg-red-600 shadow-[0_0_20px_#ef4444]"
             style={{ width: `${progress}%` }}
           />
+          {/* Scanline Effect inside bar */}
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.4),transparent)] animate-[shimmer_1s_infinite]" />
         </div>
+
         <div className="flex justify-between mt-2 text-red-800 text-xs tracking-wider">
           <span>SYS.ROOT.ADMIN</span>
           <span>{Math.floor(progress)}%</span>
         </div>
       </div>
       
-      {/* Glitch Overlay for Loader */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%] opacity-20 pointer-events-none" />
+      {/* --- GLITCH OVERLAY (Your Effect) --- */}
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%] opacity-20 pointer-events-none z-20" />
     </motion.div>
   );
 };
@@ -314,6 +335,7 @@ const SectionHeading: React.FC<SectionHeadingProps> = ({ chapter, title, subtitl
 const BackgroundScene = () => {
   const mountRef = useRef<HTMLDivElement>(null);
 
+  // --- THREE.JS PARTICLE SYSTEM (Unchanged) ---
   useEffect(() => {
     if (!mountRef.current) return;
 
@@ -406,20 +428,39 @@ const BackgroundScene = () => {
   }, []);
 
   return (
-    <div className="fixed inset-0 z-0">
+    <div className="fixed inset-0 z-0 overflow-hidden">
+        
+        {/* LAYER 1: STATIC PHOTO (Base) */}
         <div 
           className="absolute inset-0 bg-cover bg-center opacity-80 mix-blend-hard-light transition-opacity duration-1000"
           style={{ 
             backgroundImage: `url('https://occ-0-8407-2219.1.nflxso.net/dnm/api/v6/6AYY37jfdO6hpXcMjf9Yu5cnmO0/AAAABU9nCvqLHP6-u6xb9XolIr_dLpbDlja1JeWWRWHMSJerkJWZUvdtyRkctC2RoreaCERA3bel1S0XoT2dumHO3WUsxrfAh0APUwXX.jpg?r=00f')`, 
-            filter: 'contrast(1.3) brightness(0.6) sepia(0.5) hue-rotate(-20deg) saturate(1.5)' 
+            filter: 'contrast(1.3) brightness(0.6) sepia(0.5) hue-rotate(-20deg) saturate(1.5)',
+            backgroundPosition: '40% center' 
           }}
         />
+
+        {/* LAYER 2: VIDEO OVERLAY (Atmosphere) */}
+        <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover mix-blend-screen opacity-50" 
+            // mix-blend-screen ensures only the light/red parts show up
+        >
+            {/* Make sure 'bg.mp4' is in your 'public' folder */}
+            <source src="video.mp4" type="video.mp4" />
+        </video>
+
+        {/* LAYER 3: VIGNETTE (Darkens edges) */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_35%,_#000000_90%)]" />
-        <div ref={mountRef} className="absolute inset-0 mix-blend-screen" />
+        
+        {/* LAYER 4: THREE.JS PARTICLES (Floating Spores on Top) */}
+        <div ref={mountRef} className="absolute inset-0 mix-blend-screen z-10" />
     </div>
   );
 };
-
 // --- 4. TERMINAL ---
 // --- TERMINAL MODAL (Updated with Scary Vecna Reveal) ---
 const style = document.createElement('style');
@@ -434,7 +475,7 @@ document.head.appendChild(style);
 // --- TERMINAL MODAL (With Google Sheets Integration) ---
 const TerminalModal = ({ isOpen, onClose }: any) => {
   // CONFIGURATION
-  const ROUND_2_UNLOCKED = true; // Set to TRUE to test the form
+  const ROUND_2_UNLOCKED = false; // Set to TRUE to test the form
   const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby3uVVC5wqvl9b5aUcVYJJLdb7d14YhqMKVlfE3EMnA5fjmEk_XCgnwDMnTuGmoxmVL/exec"; // <--- PASTE YOUR URL HERE
 
   // STATE
@@ -1505,6 +1546,7 @@ export default function App() {
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [showTerminal, setShowTerminal] = useState(false);
   // 1. ADD THIS NEW STATE FOR NAVBAR
+    const [loading, setLoading] = useState(true); // Added loading state
   const [showNavbar, setShowNavbar] = useState(false); 
   
   const { scrollYProgress } = useScroll();
@@ -1546,7 +1588,9 @@ export default function App() {
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
-
+    <AnimatePresence>
+        {loading && <Preloader onComplete={() => setLoading(false)} />}
+      </AnimatePresence>
       {/* Global Effects */}
       <UpsideDownCursor />
       <FilmGrain />
@@ -1693,10 +1737,7 @@ export default function App() {
        {/* --- FIXED PRIZES SECTION --- */}
          <section id="prizes-section" className="py-20 px-6 w-full relative overflow-hidden">
            {/* Background Image */}
-           <div 
-              className="absolute inset-0 bg-cover bg-center opacity-20 mix-blend-overlay pointer-events-none"
-              style={{ backgroundImage: `url('https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=2670&auto=format&fit=crop')` }}
-           />
+          
            <div className="absolute inset-0 bg-gradient-to-b from-[#0B0B0B] via-transparent to-[#0B0B0B] pointer-events-none" />
 
            <SectionHeading chapter="Chapter Three" title="Spoils of War" subtitle="Rewards" align="left" />

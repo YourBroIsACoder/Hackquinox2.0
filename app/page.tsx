@@ -463,20 +463,13 @@ const BackgroundScene = () => {
 };
 // --- 4. TERMINAL ---
 // --- TERMINAL MODAL (Updated with Scary Vecna Reveal) ---
-const style = document.createElement('style');
-style.textContent = `
-  @keyframes drip {
-    0% { height: 0; opacity: 0; }
-    10% { height: 20%; opacity: 1; }
-    100% { height: 100%; opacity: 0.6; }
-  }
-`;
-document.head.appendChild(style);
+
 // --- TERMINAL MODAL (With Google Sheets Integration) ---
+// --- TERMINAL MODAL (Build-Safe Version) ---
 const TerminalModal = ({ isOpen, onClose }: any) => {
   // CONFIGURATION
   const ROUND_2_UNLOCKED = false; // Set to TRUE to test the form
-  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby3uVVC5wqvl9b5aUcVYJJLdb7d14YhqMKVlfE3EMnA5fjmEk_XCgnwDMnTuGmoxmVL/exec"; // <--- PASTE YOUR URL HERE
+  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby3uVVC5wqvl9b5aUcVYJJLdb7d14YhqMKVlfE3EMnA5fjmEk_XCgnwDMnTuGmoxmVL/exec";
 
   // STATE
   const [text, setText] = useState('');
@@ -499,7 +492,31 @@ const TerminalModal = ({ isOpen, onClose }: any) => {
   ]);
 
   const fullText = "> CONNECTING TO FCRIT_SERVER_NODE_1...\n> VERIFYING PARTICIPANT ID...\n> ACCESS GRANTED.\n\nWELCOME TO HACKQUINOX - HACK THE UPSIDE DOWN\nINITIALIZE TEAM PROTOCOLS:";
-  
+  const vecnaImageUrl = "https://upload.wikimedia.org/wikipedia/en/thumb/d/df/Vecna_%28Stranger_Things%29.jpg/250px-Vecna_%28Stranger_Things%29.jpg";
+
+  // --- FIX: INJECT STYLES SAFELY HERE ---
+  useEffect(() => {
+    // This runs ONLY in the browser, so 'document' is safe to use
+    if (!document.getElementById('terminal-drip-style')) {
+        const style = document.createElement('style');
+        style.id = 'terminal-drip-style';
+        style.textContent = `
+          @keyframes drip {
+            0% { height: 0; opacity: 0; }
+            10% { height: 20%; opacity: 1; }
+            100% { height: 100%; opacity: 0.6; }
+          }
+          .animate-drip { animation: drip 2s infinite ease-in; }
+          .animate-scanline { animation: scanline 3s linear infinite; }
+          @keyframes scanline {
+            0% { top: 0%; }
+            100% { top: 100%; }
+          }
+        `;
+        document.head.appendChild(style);
+    }
+  }, []);
+
   const scrollToBottom = () => {
     if(bottomRef.current) bottomRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
   };
@@ -556,7 +573,7 @@ const TerminalModal = ({ isOpen, onClose }: any) => {
       };
     } 
     
-    // STAGE 2: READY SEQUENCE (Only runs after successful submission)
+    // STAGE 2: READY SEQUENCE
     else if (isOpen && stage === 2) {
         const staggerDelay = 800; 
         const initialDelay = 500; 
@@ -613,17 +630,13 @@ const TerminalModal = ({ isOpen, onClose }: any) => {
     setIsSubmitting(true);
 
     try {
-        // Send data to Google Sheets
         await fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
-            mode: 'no-cors', // Important for Google Sheets
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ teamName, members })
         });
 
-        // If successful, play sound and move to next stage
         if (lockInAudioRef.current) {
             lockInAudioRef.current.currentTime = 0;
             lockInAudioRef.current.play();
@@ -639,8 +652,6 @@ const TerminalModal = ({ isOpen, onClose }: any) => {
 
   if (!isOpen) return null;
 
-  const vecnaImageUrl = "https://upload.wikimedia.org/wikipedia/en/thumb/d/df/Vecna_%28Stranger_Things%29.jpg/250px-Vecna_%28Stranger_Things%29.jpg";
-
   return (
     <AnimatePresence>
       <motion.div 
@@ -650,7 +661,9 @@ const TerminalModal = ({ isOpen, onClose }: any) => {
         {!ROUND_2_UNLOCKED ? (
             <div className="w-full max-w-5xl bg-black border border-red-800 rounded-3xl p-8 font-mono relative overflow-hidden shadow-[0_0_50px_rgba(220,38,38,0.2)] min-h-[500px] flex flex-col">
               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 pointer-events-none" />
-              <div className="absolute top-0 left-0 w-full h-1 bg-red-600 animate-[scanline_3s_linear_infinite]" />
+              {/* Uses the animation injected in useEffect */}
+              <div className="absolute top-0 left-0 w-full h-1 bg-red-600 animate-scanline" />
+              
               <div className="flex justify-between items-center mb-12 border-b border-red-900 pb-4 z-10">
                 <span className="text-red-500 font-tech tracking-[0.3em] text-xl">FCRIT_GATEWAY // PROTOCOL_SELECT</span>
                 <button onClick={onClose} className="text-red-500 hover:text-white"><X size={24}/></button>
@@ -746,9 +759,6 @@ const TerminalModal = ({ isOpen, onClose }: any) => {
             )}
             {stage === 2 && (
               <div className="flex flex-col items-center justify-center min-h-full py-10 space-y-6 text-center select-none pb-20">
-                 {/* ... (Keep existing Success/Vecna logic exactly same as before) ... */}
-                 {/* I will allow you to copy the existing Stage 2 logic here to keep this response short */}
-                 {/* Or simply keep the previous response's stage 2 block */}
                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full max-w-md border-b-2 border-red-500 pb-4 mb-4"><h2 className="text-2xl md:text-3xl text-red-400 font-black tracking-widest uppercase">SQUADRON: {teamName}</h2></motion.div>
                  <div className="space-y-4 w-full max-w-lg">
                   {members.map((m, i) => (
@@ -757,25 +767,25 @@ const TerminalModal = ({ isOpen, onClose }: any) => {
                       <motion.div initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5 + (i * 0.8) + 0.2 }} className="text-red-500 font-black tracking-widest bg-red-900/30 px-3 py-1 rounded border border-red-500/30 shadow-[0_0_10px_rgba(229,9,20,0.4)]">READY</motion.div>
                     </motion.div>
                   ))}
-                </div>
-                 {isBreach && (
-                     <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.1 }} className="mt-12 p-1 border border-red-900/50 bg-black relative w-full max-w-xl mx-auto">
-                       <motion.div animate={{ opacity: [0.2, 0.6, 0.2] }} transition={{ duration: 0.5, repeat: Infinity, ease: "easeInOut" }} className="absolute -inset-4 bg-red-600/40 blur-xl rounded-full z-0 pointer-events-none" />
-                       <div className="relative z-10 bg-black border border-red-600 p-8 overflow-hidden">
-                           <motion.div initial={{ x: 0, filter: "brightness(3)" }} animate={{ x: [-5, 5, -2, 2, 0], filter: "brightness(1)" }} transition={{ duration: 0.4 }} className="relative w-56 h-56 md:w-72 md:h-72 mx-auto mb-8 shadow-[0_0_50px_rgba(220,38,38,0.5)] border border-red-500/30">
-                                <div className="w-full h-full relative overflow-hidden bg-black">
-                                    <motion.img src={vecnaImageUrl} alt="Vecna" animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} className="relative z-10 w-full h-full object-cover" style={{ filter: 'grayscale(100%) contrast(1.5) brightness(0.9)' }} />
-                                    <div className="absolute inset-0 z-20 bg-red-700 mix-blend-multiply opacity-80 pointer-events-none" />
-                                    <div className="absolute inset-0 z-20 bg-red-500 mix-blend-overlay opacity-40 pointer-events-none" />
-                                    <motion.div animate={{ x: [-2, 2, 0], opacity: [0, 0.8, 0] }} transition={{ duration: 0.2, repeat: Infinity, repeatDelay: 3 }} className="absolute inset-0 z-40 bg-red-600 mix-blend-screen opacity-50" style={{ backgroundImage: `url('${vecnaImageUrl}')`, backgroundSize: 'cover' }} />
-                                </div>
-                           </motion.div>
-                           <h3 className="text-red-600 font-black text-3xl md:text-5xl uppercase tracking-widest mb-4 drop-shadow-[0_0_10px_rgba(220,38,38,0.8)] font-benguiat leading-none">TARGET LOCKED</h3>
-                           <div className="h-px w-full bg-gradient-to-r from-transparent via-red-600 to-transparent mb-4 opacity-50" />
-                           <p className="text-red-400 font-mono text-sm tracking-[0.2em] animate-pulse">THREAT LEVEL: OMEGA <br/><span className="text-white">INITIATING CONTAINMENT PROTOCOLS...</span></p>
-                       </div>
-                     </motion.div>
-                 )}
+                 </div>
+                  {isBreach && (
+                      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.1 }} className="mt-12 p-1 border border-red-900/50 bg-black relative w-full max-w-xl mx-auto">
+                        <motion.div animate={{ opacity: [0.2, 0.6, 0.2] }} transition={{ duration: 0.5, repeat: Infinity, ease: "easeInOut" }} className="absolute -inset-4 bg-red-600/40 blur-xl rounded-full z-0 pointer-events-none" />
+                        <div className="relative z-10 bg-black border border-red-600 p-8 overflow-hidden">
+                            <motion.div initial={{ x: 0, filter: "brightness(3)" }} animate={{ x: [-5, 5, -2, 2, 0], filter: "brightness(1)" }} transition={{ duration: 0.4 }} className="relative w-56 h-56 md:w-72 md:h-72 mx-auto mb-8 shadow-[0_0_50px_rgba(220,38,38,0.5)] border border-red-500/30">
+                                 <div className="w-full h-full relative overflow-hidden bg-black">
+                                     <motion.img src={vecnaImageUrl} alt="Vecna" animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} className="relative z-10 w-full h-full object-cover" style={{ filter: 'grayscale(100%) contrast(1.5) brightness(0.9)' }} />
+                                     <div className="absolute inset-0 z-20 bg-red-700 mix-blend-multiply opacity-80 pointer-events-none" />
+                                     <div className="absolute inset-0 z-20 bg-red-500 mix-blend-overlay opacity-40 pointer-events-none" />
+                                     <motion.div animate={{ x: [-2, 2, 0], opacity: [0, 0.8, 0] }} transition={{ duration: 0.2, repeat: Infinity, repeatDelay: 3 }} className="absolute inset-0 z-40 bg-red-600 mix-blend-screen opacity-50" style={{ backgroundImage: `url('${vecnaImageUrl}')`, backgroundSize: 'cover' }} />
+                                 </div>
+                            </motion.div>
+                            <h3 className="text-red-600 font-black text-3xl md:text-5xl uppercase tracking-widest mb-4 drop-shadow-[0_0_10px_rgba(220,38,38,0.8)] font-benguiat leading-none">TARGET LOCKED</h3>
+                            <div className="h-px w-full bg-gradient-to-r from-transparent via-red-600 to-transparent mb-4 opacity-50" />
+                            <p className="text-red-400 font-mono text-sm tracking-[0.2em] animate-pulse">THREAT LEVEL: OMEGA <br/><span className="text-white">INITIATING CONTAINMENT PROTOCOLS...</span></p>
+                        </div>
+                      </motion.div>
+                  )}
                  <div ref={bottomRef} className="h-4" />
                  <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 3.5 }} onClick={onClose} className="mt-8 text-red-600 hover:text-red-300 underline underline-offset-4 font-mono text-sm uppercase">[CLOSE TERMINAL]</motion.button>
               </div>
@@ -787,7 +797,6 @@ const TerminalModal = ({ isOpen, onClose }: any) => {
     </AnimatePresence>
   );
 };
-
 
 // --- DOMAIN CAROUSEL ---
 

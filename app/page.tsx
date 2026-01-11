@@ -1,14 +1,17 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
+import { motion, useScroll, useTransform, AnimatePresence,useMotionValue,useSpring,useVelocity } from 'framer-motion';
 import * as THREE from 'three';
 import { 
   Terminal, Code2, Cpu, Globe, Users, Zap, 
-  Layers, Ghost, Radio, ChevronDown, Github, Linkedin, 
+  Layers, Ghost, Radio, ChevronDown, Github, Linkedin, Instagram,
   Play, X, Wifi, ShieldAlert, Database, Lock,
   Calendar, Clock, Trophy, Gift, Star, Ticket, ArrowRight, ArrowLeft, Briefcase,
   Volume2, VolumeX
 } from 'lucide-react';
+import { MapPin, Navigation as NavigationIcon } from 'lucide-react';
+
+
 
 // --- TYPES ---
 
@@ -151,6 +154,69 @@ class AudioController {
 // Global Audio Instance
 const bgMusic = new AudioController('/stranger-things-124008.mp3');
 
+
+const Preloader = ({ onComplete }: { onComplete: () => void }) => {
+  const [progress, setProgress] = useState(0);
+  const [text, setText] = useState("INITIALIZING PROTOCOL...");
+
+  useEffect(() => {
+    // Simulate loading progress
+    const timer = setInterval(() => {
+      setProgress(prev => {
+        const next = prev + Math.random() * 5;
+        if (next >= 100) {
+          clearInterval(timer);
+          return 100;
+        }
+        return next;
+      });
+    }, 50);
+
+    // Text sequence
+    const t1 = setTimeout(() => setText("BYPASSING FIREWALL..."), 800);
+    const t2 = setTimeout(() => setText("CONNECTING TO UPSIDE DOWN..."), 1800);
+    const t3 = setTimeout(() => {
+      setText("ACCESS GRANTED.");
+      onComplete();
+    }, 3000);
+
+    return () => {
+      clearInterval(timer);
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, [onComplete]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0, filter: "blur(20px)", scale: 1.1 }}
+      transition={{ duration: 0.8, ease: "easeInOut" }}
+      className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center font-mono pointer-events-none"
+    >
+      <div className="w-full max-w-md px-6">
+        <h1 className="text-red-500 text-xl md:text-3xl font-black tracking-widest mb-8 animate-pulse text-center">
+          {text}
+        </h1>
+        <div className="w-full h-2 bg-red-900/30 rounded-full overflow-hidden border border-red-900/50">
+          <motion.div 
+            className="h-full bg-red-600 shadow-[0_0_20px_#ef4444]"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+        <div className="flex justify-between mt-2 text-red-800 text-xs tracking-wider">
+          <span>SYS.ROOT.ADMIN</span>
+          <span>{Math.floor(progress)}%</span>
+        </div>
+      </div>
+      
+      {/* Glitch Overlay for Loader */}
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%] opacity-20 pointer-events-none" />
+    </motion.div>
+  );
+};
+
 // --- 2. BASIC COMPONENTS ---
 
 const BriefcaseIcon = ({ size, className }: { size: number; className?: string }) => (
@@ -181,45 +247,7 @@ const SocialLink = ({ icon: Icon }: { icon: React.ElementType }) => (
 );
 
 // REVISED CLUB ENTITY: Merged look, removed dark circle
-const ClubEntity: React.FC<ClubEntityProps> = ({ name, delay }) => (
-  <motion.div 
-    whileHover={{ y: -5, scale: 1.05 }}
-    className="group relative flex flex-col items-center justify-center cursor-pointer"
-  >
-    {/* Rotating "Portal" Rings - More Subtle */}
-    <div className="relative w-32 h-32 md:w-40 md:h-40 flex items-center justify-center">
-       
-       {/* Spinning outer ring - Red energy */}
-       <motion.div 
-         className="absolute inset-0 rounded-full border border-red-500/30 border-t-red-500 border-l-transparent"
-         animate={{ rotate: 360 }}
-         transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-       />
-       {/* Counter-spinning inner ring */}
-       <motion.div 
-         className="absolute inset-4 rounded-full border border-red-900/40 border-b-red-400 border-r-transparent"
-         animate={{ rotate: -360 }}
-         transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-       />
-
-       {/* Logo Image - Blended */}
-       <div className="relative z-10 w-20 h-20 md:w-24 md:h-24 opacity-80 group-hover:opacity-100 transition-all duration-300">
-         <img 
-           src={`https://placehold.co/150x150/000000/FFFFFF/png?text=${name}`} 
-           alt={`${name} Logo`} 
-           className="w-full h-full object-contain mix-blend-screen filter drop-shadow-[0_0_15px_rgba(220,38,38,0.4)]" 
-         />
-       </div>
-       
-       {/* Ambient Glow */}
-       <div className="absolute inset-0 bg-red-600/10 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-    </div>
-
-    <span className="mt-4 font-benguiat text-gray-500 group-hover:text-red-400 tracking-widest transition-colors duration-300 text-sm uppercase">
-      {name}
-    </span>
-  </motion.div>
-);
+// --- CLUB ENTITY (Holographic Node Style) ---
 
 const FilmGrain = () => (
   <div className="fixed inset-0 z-[60] pointer-events-none opacity-[0.08] mix-blend-overlay"
@@ -380,13 +408,13 @@ const BackgroundScene = () => {
   return (
     <div className="fixed inset-0 z-0">
         <div 
-          className="absolute inset-0 bg-cover bg-center opacity-60 mix-blend-hard-light transition-opacity duration-1000"
+          className="absolute inset-0 bg-cover bg-center opacity-80 mix-blend-hard-light transition-opacity duration-1000"
           style={{ 
             backgroundImage: `url('https://occ-0-8407-2219.1.nflxso.net/dnm/api/v6/6AYY37jfdO6hpXcMjf9Yu5cnmO0/AAAABU9nCvqLHP6-u6xb9XolIr_dLpbDlja1JeWWRWHMSJerkJWZUvdtyRkctC2RoreaCERA3bel1S0XoT2dumHO3WUsxrfAh0APUwXX.jpg?r=00f')`, 
             filter: 'contrast(1.3) brightness(0.6) sepia(0.5) hue-rotate(-20deg) saturate(1.5)' 
           }}
         />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_10%,_#000000_90%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_35%,_#000000_90%)]" />
         <div ref={mountRef} className="absolute inset-0 mix-blend-screen" />
     </div>
   );
@@ -394,15 +422,33 @@ const BackgroundScene = () => {
 
 // --- 4. TERMINAL ---
 // --- TERMINAL MODAL (Updated with Scary Vecna Reveal) ---
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes drip {
+    0% { height: 0; opacity: 0; }
+    10% { height: 20%; opacity: 1; }
+    100% { height: 100%; opacity: 0.6; }
+  }
+`;
+document.head.appendChild(style);
+// --- TERMINAL MODAL (With Google Sheets Integration) ---
 const TerminalModal = ({ isOpen, onClose }: any) => {
+  // CONFIGURATION
+  const ROUND_2_UNLOCKED = true; // Set to TRUE to test the form
+  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby3uVVC5wqvl9b5aUcVYJJLdb7d14YhqMKVlfE3EMnA5fjmEk_XCgnwDMnTuGmoxmVL/exec"; // <--- PASTE YOUR URL HERE
+
+  // STATE
   const [text, setText] = useState('');
   const [stage, setStage] = useState(0); 
   const [teamName, setTeamName] = useState('');
+  const [isBreach, setIsBreach] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false); // Loading State
   
-  // Audio Refs
+  // REFS
   const typingAudioRef = useRef<HTMLAudioElement | null>(null);
   const lockInAudioRef = useRef<HTMLAudioElement | null>(null);
   const statusAudioRef = useRef<HTMLAudioElement | null>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   const [members, setMembers] = useState([
     { name: '', phone: '', email: '' },
@@ -411,31 +457,34 @@ const TerminalModal = ({ isOpen, onClose }: any) => {
     { name: '', phone: '', email: '' }
   ]);
 
-  const fullText = "> CONNECTING TO FCRIT_SERVER_NODE_1...\n> VERIFYING PARTICIPANT ID...\n> ACCESS GRANTED.\n\nWELCOME TO HACKQUINOX \nINITIALIZE TEAM PROTOCOLS:";
+  const fullText = "> CONNECTING TO FCRIT_SERVER_NODE_1...\n> VERIFYING PARTICIPANT ID...\n> ACCESS GRANTED.\n\nWELCOME TO HACKQUINOX - HACK THE UPSIDE DOWN\nINITIALIZE TEAM PROTOCOLS:";
   
-  useEffect(() => {
-    // 1. Typing
-    if (!typingAudioRef.current) {
-        typingAudioRef.current = new Audio('/keyboard.mp3'); 
-        typingAudioRef.current.loop = true;
-        typingAudioRef.current.volume = 0.6; 
-    }
-    // 2. Lock-In
-    if (!lockInAudioRef.current) {
-        lockInAudioRef.current = new Audio('/lock-in.mp3'); 
-        lockInAudioRef.current.volume = 1.0;
-    }
-    // 3. Status/Game Sound
-    if (!statusAudioRef.current) {
-        statusAudioRef.current = new Audio('/bg.mp3'); 
-        statusAudioRef.current.volume = 0.6; 
-    }
-  }, []);
+  const scrollToBottom = () => {
+    if(bottomRef.current) bottomRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+  };
 
   useEffect(() => {
-    // STAGE 0: TYPING
+    if (ROUND_2_UNLOCKED) {
+        if (!typingAudioRef.current) {
+            typingAudioRef.current = new Audio('/keyboard.mp3'); 
+            typingAudioRef.current.loop = true;
+            typingAudioRef.current.volume = 0.6; 
+        }
+        if (!lockInAudioRef.current) {
+            lockInAudioRef.current = new Audio('/lock-in.mp3'); 
+            lockInAudioRef.current.volume = 1.0;
+        }
+        if (!statusAudioRef.current) {
+            statusAudioRef.current = new Audio('/bg.mp3'); 
+            statusAudioRef.current.volume = 0.6; 
+        }
+    }
+  }, [ROUND_2_UNLOCKED]);
+
+  useEffect(() => {
+    if (!ROUND_2_UNLOCKED) return;
+
     if (isOpen && stage === 0) {
-      // @ts-ignore
       if (typeof bgMusic !== 'undefined') bgMusic.fadeVolume(0.1, 0.5); 
       if (typingAudioRef.current) {
           typingAudioRef.current.currentTime = 0;
@@ -449,12 +498,13 @@ const TerminalModal = ({ isOpen, onClose }: any) => {
         if (currentIndex < fullText.length) {
           currentText += fullText[currentIndex];
           setText(currentText);
+          scrollToBottom();
           currentIndex++;
         } else {
           clearInterval(interval);
           setStage(1);
+          scrollToBottom();
           if (typingAudioRef.current) typingAudioRef.current.pause();
-           // @ts-ignore
           if (typeof bgMusic !== 'undefined') bgMusic.fadeVolume(0.4, 2.0); 
         }
       }, 30); 
@@ -465,48 +515,50 @@ const TerminalModal = ({ isOpen, onClose }: any) => {
       };
     } 
     
-    // STAGE 2: READY SEQUENCE
+    // STAGE 2: READY SEQUENCE (Only runs after successful submission)
     else if (isOpen && stage === 2) {
-        const staggerDelay = 200; 
+        const staggerDelay = 800; 
         const initialDelay = 500; 
-        const vecnaAppearanceTime = 2000; 
+        const vecnaAppearanceTime = initialDelay + (4 * staggerDelay) + 500; 
 
-        // Player Sounds
         const timers = members.map((_, index) => {
             return setTimeout(() => {
                 if (statusAudioRef.current) {
                     statusAudioRef.current.currentTime = 0; 
                     statusAudioRef.current.play().catch(() => {});
                 }
+                scrollToBottom(); 
             }, initialDelay + (index * staggerDelay));
         });
 
-        // Force Stop Audio at Vecna Appearance
-        const stopTimer = setTimeout(() => {
+        const vecnaTimer = setTimeout(() => {
+            setIsBreach(true); 
             if (statusAudioRef.current) {
-                statusAudioRef.current.pause();
+                statusAudioRef.current.pause(); 
                 statusAudioRef.current.currentTime = 0;
             }
+            setTimeout(() => scrollToBottom(), 100);
         }, vecnaAppearanceTime);
 
         return () => {
             timers.forEach(t => clearTimeout(t));
-            clearTimeout(stopTimer);
+            clearTimeout(vecnaTimer);
+            setIsBreach(false);
         };
     }
 
-    // RESET
     else if (!isOpen) {
       setText('');
       setStage(0);
       setTeamName('');
       setMembers(Array(4).fill({ name: '', phone: '', email: '' }));
-      // @ts-ignore
+      setIsBreach(false);
+      setIsSubmitting(false);
       if (typeof bgMusic !== 'undefined') bgMusic.fadeVolume(0.4, 1.0);
       if (typingAudioRef.current) typingAudioRef.current.pause();
       if (statusAudioRef.current) statusAudioRef.current.pause();
     }
-  }, [isOpen, stage]);
+  }, [isOpen, stage, ROUND_2_UNLOCKED]);
 
   const handleMemberChange = (index: number, field: string, value: string) => {
     const newMembers = [...members];
@@ -515,67 +567,115 @@ const TerminalModal = ({ isOpen, onClose }: any) => {
     setMembers(newMembers);
   };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
-    if (lockInAudioRef.current) {
-        lockInAudioRef.current.currentTime = 0;
-        lockInAudioRef.current.play();
+    setIsSubmitting(true);
+
+    try {
+        // Send data to Google Sheets
+        await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors', // Important for Google Sheets
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ teamName, members })
+        });
+
+        // If successful, play sound and move to next stage
+        if (lockInAudioRef.current) {
+            lockInAudioRef.current.currentTime = 0;
+            lockInAudioRef.current.play();
+        }
+        setStage(2);
+    } catch (error) {
+        console.error("Transmission Failed", error);
+        alert("Transmission Failed. Check your internet connection.");
+    } finally {
+        setIsSubmitting(false);
     }
-    setStage(2);
   };
 
   if (!isOpen) return null;
 
-  // CSS filter for the harsh red look
-  const harshRedFilter = 'brightness(0.8) contrast(2.5) grayscale(1) sepia(1) hue-rotate(-50deg) saturate(3)';
   const vecnaImageUrl = "https://upload.wikimedia.org/wikipedia/en/thumb/d/df/Vecna_%28Stranger_Things%29.jpg/250px-Vecna_%28Stranger_Things%29.jpg";
 
   return (
     <AnimatePresence>
       <motion.div 
-        initial={{ opacity: 0 }} 
-        animate={{ opacity: 1 }} 
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm"
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm"
       >
-        <div className="w-full max-w-6xl bg-black border border-red-800 rounded-3xl p-6 font-mono relative overflow-hidden shadow-[0_0_80px_rgba(229,9,20,0.3)] h-[90vh] flex flex-col">
-          
-          <div 
-            className="absolute inset-0 bg-cover bg-center z-0"
-            style={{ 
-              backgroundImage: `url('https://i.pinimg.com/736x/dd/f9/32/ddf932385822e1753776a977f8cc7b5a.jpg')`,
-              filter: 'contrast(1.2) brightness(0.6) sepia(1) hue-rotate(-50deg)',
-              opacity: 0.4 
-            }}
-          />
-
+        {!ROUND_2_UNLOCKED ? (
+            <div className="w-full max-w-5xl bg-black border border-red-800 rounded-3xl p-8 font-mono relative overflow-hidden shadow-[0_0_50px_rgba(220,38,38,0.2)] min-h-[500px] flex flex-col">
+              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 pointer-events-none" />
+              <div className="absolute top-0 left-0 w-full h-1 bg-red-600 animate-[scanline_3s_linear_infinite]" />
+              <div className="flex justify-between items-center mb-12 border-b border-red-900 pb-4 z-10">
+                <span className="text-red-500 font-tech tracking-[0.3em] text-xl">FCRIT_GATEWAY // PROTOCOL_SELECT</span>
+                <button onClick={onClose} className="text-red-500 hover:text-white"><X size={24}/></button>
+              </div>
+              <div className="flex flex-col md:flex-row gap-8 items-center justify-center h-full z-10">
+                <motion.div 
+                   whileHover={{ scale: 1.02, borderColor: '#ef4444' }}
+                   className="group relative w-full md:w-1/2 h-80 border border-red-900 bg-red-950/20 rounded-xl p-8 flex flex-col justify-between overflow-hidden cursor-pointer"
+                   onClick={() => window.open('https://your-google-form-link.com', '_blank')}
+                >
+                   <div className="absolute inset-0 bg-red-600/0 group-hover:bg-red-600/10 transition-colors" />
+                   <div>
+                     <div className="flex justify-between items-start mb-4">
+                        <h3 className="text-3xl font-benguiat text-white">ROUND 01</h3>
+                        <div className="px-3 py-1 bg-green-900/50 border border-green-500 text-green-400 text-xs tracking-widest rounded">ACCESS GRANTED</div>
+                     </div>
+                     <p className="text-gray-400 text-sm leading-relaxed">
+                        Preliminary aptitude test. Solve the riddles to find the coordinates.
+                        <br/><span className="text-red-400 mt-2 block"> CLICK TO ENTER PORTAL</span>
+                     </p>
+                   </div>
+                   <div className="w-full h-32 bg-black/50 rounded border border-red-900/50 flex items-center justify-center relative overflow-hidden">
+                       <Globe className="text-red-500 w-12 h-12 animate-pulse" />
+                   </div>
+                </motion.div>
+                <motion.div className="relative w-full md:w-1/2 h-80 border border-gray-800 bg-black rounded-xl p-8 flex flex-col justify-between overflow-hidden grayscale opacity-75">
+                   <div className="absolute inset-0 bg-black/60 z-20 flex flex-col items-center justify-center backdrop-blur-[2px]">
+                       <Lock className="text-gray-400 w-16 h-16 mb-4" />
+                       <span className="text-gray-400 font-tech tracking-[0.3em] border border-gray-600 px-4 py-2 rounded">CLASSIFIED // LOCKED</span>
+                   </div>
+                   <div>
+                     <div className="flex justify-between items-start mb-4">
+                        <h3 className="text-3xl font-benguiat text-gray-500">ROUND 02</h3>
+                        <div className="px-3 py-1 bg-gray-900 border border-gray-700 text-gray-500 text-xs tracking-widest rounded">RESTRICTED</div>
+                     </div>
+                     <p className="text-gray-600 text-sm leading-relaxed">The Main Event. Only qualified squads may enter the Upside Down.</p>
+                   </div>
+                   <div className="w-full h-32 bg-gray-900/50 rounded border border-gray-800 flex items-center justify-center">
+                       <Database className="text-gray-700 w-12 h-12" />
+                   </div>
+                </motion.div>
+              </div>
+            </div>
+        ) : (
+        <motion.div 
+            animate={isBreach ? { x: [-10, 10, -10, 10, 0], borderColor: ["#991b1b", "#ef4444", "#991b1b"] } : {}}
+            transition={{ duration: 0.4 }}
+            className={`w-full max-w-6xl bg-black border ${isBreach ? 'border-red-500 shadow-[0_0_100px_red]' : 'border-red-800 shadow-[0_0_80px_rgba(229,9,20,0.3)]'} rounded-3xl p-6 font-mono relative overflow-hidden h-[90vh] flex flex-col transition-all duration-300`}
+        >
+          <div className="absolute inset-0 bg-cover bg-center z-0" style={{ backgroundImage: `url('https://i.pinimg.com/736x/dd/f9/32/ddf932385822e1753776a977f8cc7b5a.jpg')`, filter: 'contrast(1.2) brightness(0.6) sepia(1) hue-rotate(-50deg)', opacity: 0.4 }} />
           <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%] opacity-20 pointer-events-none z-20" />
           <div className="absolute top-0 left-0 w-full h-1 bg-red-500/20 animate-scanline pointer-events-none z-20" />
 
           <div className="flex justify-between items-center mb-6 border-b border-red-900 pb-2 flex-shrink-0 z-30 relative">
             <span className="text-red-500 text-xs tracking-widest">TERMINAL V.2.0 // REG_SYS</span>
-            <button onClick={onClose} className="text-red-700 hover:text-red-400 transition-colors bg-red-900/10 p-1 rounded-full">
-              <X size={20} />
-            </button>
+            <button onClick={onClose} className="text-red-700 hover:text-red-400 transition-colors bg-red-900/10 p-1 rounded-full"><X size={20} /></button>
           </div>
 
           <div className="flex-1 overflow-y-auto overflow-x-hidden relative z-10 custom-scrollbar pr-2">
-            
             {(stage === 0 || stage === 1) && (
               <>
                 <div className="text-red-500 whitespace-pre-wrap min-h-[100px] text-sm md:text-base leading-relaxed mb-6">
-                  {text}
-                  {stage === 0 && <span className="animate-pulse">_</span>}
+                  {text}{stage === 0 && <span className="animate-pulse">_</span>}
                 </div>
-
                 {stage === 1 && (
-                  <motion.form 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    onSubmit={handleSubmit}
-                    className="flex flex-col gap-8 pb-8"
-                  >
-                    {/* ... (Inputs remain the same) ... */}
+                  <motion.form initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} onSubmit={handleSubmit} className="flex flex-col gap-8 pb-8">
                     <div className="border border-red-800/50 p-6 bg-black/60 rounded-2xl backdrop-blur-md">
                       <h3 className="text-red-400 mb-4 border-b border-red-800 inline-block uppercase tracking-wider font-bold">01. Team Identity</h3>
                       <div className="flex flex-col gap-2">
@@ -583,7 +683,6 @@ const TerminalModal = ({ isOpen, onClose }: any) => {
                         <input required value={teamName} onChange={(e) => setTeamName(e.target.value)} type="text" className="bg-black/50 border border-red-800/60 text-red-300 px-4 py-3 outline-none focus:border-red-500 focus:shadow-[0_0_15px_rgba(229,9,20,0.3)] w-full font-mono uppercase tracking-widest rounded-xl transition-all" autoFocus placeholder="ENTER TEAM NAME..." />
                       </div>
                     </div>
-
                     <div className="border border-red-800/50 p-6 bg-black/60 rounded-2xl backdrop-blur-md">
                       <h3 className="text-red-400 mb-4 border-b border-red-800 inline-block uppercase tracking-wider font-bold">02. Squad Allocation</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -597,174 +696,116 @@ const TerminalModal = ({ isOpen, onClose }: any) => {
                         ))}
                       </div>
                     </div>
-
-                    <button type="submit" className="mt-4 bg-red-900/20 border border-red-600 text-red-400 py-4 hover:bg-red-600/30 hover:text-white hover:backdrop-blur-md transition-all duration-300 font-bold tracking-[0.2em] uppercase shadow-[0_0_20px_rgba(229,9,20,0.1)] hover:shadow-[0_0_30px_rgba(229,9,20,0.6)] rounded-xl backdrop-blur-sm">
-                      &gt; INITIATE HACK SEQUENCE
+                    <button disabled={isSubmitting} type="submit" className="mt-4 bg-red-900/20 border border-red-600 text-red-400 py-4 hover:bg-red-600/30 hover:text-white hover:backdrop-blur-md transition-all duration-300 font-bold tracking-[0.2em] uppercase shadow-[0_0_20px_rgba(229,9,20,0.1)] hover:shadow-[0_0_30px_rgba(229,9,20,0.6)] rounded-xl backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                      {isSubmitting ? 'TRANSMITTING DATA...' : '> INITIATE HACK SEQUENCE'}
                     </button>
                   </motion.form>
                 )}
               </>
             )}
-
             {stage === 2 && (
-              <div className="flex flex-col items-center justify-center min-h-full py-10 space-y-6 text-center select-none">
-                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full max-w-md border-b-2 border-red-500 pb-4 mb-4">
-                    <h2 className="text-2xl md:text-3xl text-red-400 font-black tracking-widest uppercase">SQUADRON: {teamName}</h2>
-                 </motion.div>
-
+              <div className="flex flex-col items-center justify-center min-h-full py-10 space-y-6 text-center select-none pb-20">
+                 {/* ... (Keep existing Success/Vecna logic exactly same as before) ... */}
+                 {/* I will allow you to copy the existing Stage 2 logic here to keep this response short */}
+                 {/* Or simply keep the previous response's stage 2 block */}
+                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full max-w-md border-b-2 border-red-500 pb-4 mb-4"><h2 className="text-2xl md:text-3xl text-red-400 font-black tracking-widest uppercase">SQUADRON: {teamName}</h2></motion.div>
                  <div className="space-y-4 w-full max-w-lg">
                   {members.map((m, i) => (
-                    <motion.div 
-                      key={i}
-                      initial={{ opacity: 0, x: -50 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.5 + (i * 0.2), type: 'spring' }} 
-                      className="flex items-center justify-between border-l-4 border-red-600 bg-red-900/40 backdrop-blur-md p-4 rounded-r-xl"
-                    >
-                      <div className="text-left">
-                        <span className="block text-xs text-red-600 tracking-widest font-bold">PLAYER 0{i + 1}</span>
-                        <span className="text-lg text-red-300 font-bold uppercase">{m.name || 'UNKNOWN'}</span>
-                      </div>
-                      <motion.div 
-                        initial={{ opacity: 0, scale: 0 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.5 + (i * 0.2) + 0.1 }}
-                        className="text-red-500 font-black tracking-widest bg-red-900/30 px-3 py-1 rounded border border-red-500/30 shadow-[0_0_10px_rgba(229,9,20,0.4)]"
-                      >
-                        READY
-                      </motion.div>
+                    <motion.div key={i} initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 + (i * 0.8), type: 'spring' }} className="flex items-center justify-between border-l-4 border-red-600 bg-red-900/40 backdrop-blur-md p-4 rounded-r-xl">
+                      <div className="text-left"><span className="block text-xs text-red-600 tracking-widest font-bold">PLAYER 0{i + 1}</span><span className="text-lg text-red-300 font-bold uppercase">{m.name || 'UNKNOWN'}</span></div>
+                      <motion.div initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5 + (i * 0.8) + 0.2 }} className="text-red-500 font-black tracking-widest bg-red-900/30 px-3 py-1 rounded border border-red-500/30 shadow-[0_0_10px_rgba(229,9,20,0.4)]">READY</motion.div>
                     </motion.div>
                   ))}
                 </div>
-                 
-                 {/* --- UPDATED VECNA DOSSIER SECTION (SCARY VERSION) --- */}
-                 <motion.div 
-                   initial={{ opacity: 0, scale: 0.8 }}
-                   animate={{ opacity: 1, scale: 1 }}
-                   transition={{ delay: 2.0, type: 'spring', bounce: 0.5 }} // Bouncier entrance
-                   className="mt-12 p-8 border-4 border-double border-red-600 bg-[#0a0000] relative overflow-hidden group rounded-sm w-full max-w-xl shadow-[0_0_50px_rgba(220,38,38,0.5)]"
-                 >
-                   {/* Intense pulsing background */}
-                   <motion.div 
-                        animate={{ opacity: [0.1, 0.3, 0.1] }}
-                        transition={{ duration: 0.2, repeat: Infinity, repeatType: "reverse" }}
-                        className="absolute inset-0 bg-red-600/20 pointer-events-none" 
-                   />
-                   
-                   {/* STRATEGICALLY PLACED IMAGE WITH RGB GLITCH */}
-                   <motion.div 
-                        // Violent shake entrance
-                        initial={{ x: 0 }}
-                        animate={{ x: [-10, 10, -5, 5, 0] }}
-                        transition={{ delay: 2.0, duration: 0.4, ease: "easeInOut" }}
-                        className="relative w-48 h-48 md:w-64 md:h-64 mx-auto mb-8 rounded-sm overflow-hidden border-2 border-red-500/80 shadow-[0_0_40px_rgba(220,38,38,0.6)] group-hover:scale-105 transition-transform duration-500"
-                    >
-                        {/* RGB Split Layers (The Glitch Effect) */}
-                        {/* Red Channel shift */}
-                        <motion.div 
-                             animate={{ x: [-2, 2, -1, 0], opacity: [0.5, 0.8, 0.5] }}
-                             transition={{ duration: 0.1, repeat: Infinity, repeatDelay: Math.random() * 2 }}
-                             className="absolute inset-0 z-10 mix-blend-screen opacity-50 pointer-events-none"
-                             style={{ 
-                                backgroundImage: `url('${vecnaImageUrl}')`, 
-                                backgroundSize: 'cover', 
-                                filter: `${harshRedFilter} drop-shadow(5px 0 0 red)`
-                             }} 
-                        />
-                        {/* Blue Channel shift */}
-                         <motion.div 
-                             animate={{ x: [2, -2, 1, 0], opacity: [0.5, 0.8, 0.5] }}
-                             transition={{ duration: 0.15, repeat: Infinity, repeatDelay: Math.random() * 3 }}
-                             className="absolute inset-0 z-10 mix-blend-screen opacity-50 pointer-events-none"
-                             style={{ 
-                                backgroundImage: `url('${vecnaImageUrl}')`, 
-                                backgroundSize: 'cover', 
-                                filter: `${harshRedFilter} drop-shadow(-5px 0 0 cyan)`
-                             }} 
-                        />
-
-                        {/* Main Base Image (Harsh contrast) */}
-                        <img 
-                            src={vecnaImageUrl}
-                            alt="Vecna" 
-                            className="relative z-0 object-cover w-full h-full"
-                            style={{ filter: harshRedFilter }}
-                        />
-                        
-                        {/* Heavy Scanline & Noise Overlay */}
-                        <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.7)_50%)] bg-[length:100%_3px] z-30 pointer-events-none opacity-70" />
-                        <div className="absolute inset-0 bg-[url('https://upload.wikimedia.org/wikipedia/commons/7/76/Noise.png')] opacity-20 mix-blend-overlay z-40 pointer-events-none" />
-                   </motion.div>
-
-                   <h3 className="text-red-500 font-black text-2xl md:text-4xl uppercase tracking-[0.2em] mb-4 drop-shadow-[0_0_15px_rgba(220,38,38,1)] animate-pulse leading-none">
-                     ⚠ CORRUPTION DETECTED: VECNA
-                   </h3>
-                   <p className="text-red-300 font-mono text-base tracking-wider border-t border-red-800 pt-4">
-                     THE GATE IS OPEN. <br/> <span className="text-red-500 font-bold">RUN.</span>
-                   </p>
-                 </motion.div>
-
-                 <motion.button 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 2.5 }}
-                  onClick={onClose}
-                  className="mt-8 text-red-600 hover:text-red-300 underline underline-offset-4 font-mono text-sm uppercase"
-                >
-                  [CLOSE TERMINAL]
-                </motion.button>
+                 {isBreach && (
+                     <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.1 }} className="mt-12 p-1 border border-red-900/50 bg-black relative w-full max-w-xl mx-auto">
+                       <motion.div animate={{ opacity: [0.2, 0.6, 0.2] }} transition={{ duration: 0.5, repeat: Infinity, ease: "easeInOut" }} className="absolute -inset-4 bg-red-600/40 blur-xl rounded-full z-0 pointer-events-none" />
+                       <div className="relative z-10 bg-black border border-red-600 p-8 overflow-hidden">
+                           <motion.div initial={{ x: 0, filter: "brightness(3)" }} animate={{ x: [-5, 5, -2, 2, 0], filter: "brightness(1)" }} transition={{ duration: 0.4 }} className="relative w-56 h-56 md:w-72 md:h-72 mx-auto mb-8 shadow-[0_0_50px_rgba(220,38,38,0.5)] border border-red-500/30">
+                                <div className="w-full h-full relative overflow-hidden bg-black">
+                                    <motion.img src={vecnaImageUrl} alt="Vecna" animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} className="relative z-10 w-full h-full object-cover" style={{ filter: 'grayscale(100%) contrast(1.5) brightness(0.9)' }} />
+                                    <div className="absolute inset-0 z-20 bg-red-700 mix-blend-multiply opacity-80 pointer-events-none" />
+                                    <div className="absolute inset-0 z-20 bg-red-500 mix-blend-overlay opacity-40 pointer-events-none" />
+                                    <motion.div animate={{ x: [-2, 2, 0], opacity: [0, 0.8, 0] }} transition={{ duration: 0.2, repeat: Infinity, repeatDelay: 3 }} className="absolute inset-0 z-40 bg-red-600 mix-blend-screen opacity-50" style={{ backgroundImage: `url('${vecnaImageUrl}')`, backgroundSize: 'cover' }} />
+                                </div>
+                           </motion.div>
+                           <h3 className="text-red-600 font-black text-3xl md:text-5xl uppercase tracking-widest mb-4 drop-shadow-[0_0_10px_rgba(220,38,38,0.8)] font-benguiat leading-none">TARGET LOCKED</h3>
+                           <div className="h-px w-full bg-gradient-to-r from-transparent via-red-600 to-transparent mb-4 opacity-50" />
+                           <p className="text-red-400 font-mono text-sm tracking-[0.2em] animate-pulse">THREAT LEVEL: OMEGA <br/><span className="text-white">INITIATING CONTAINMENT PROTOCOLS...</span></p>
+                       </div>
+                     </motion.div>
+                 )}
+                 <div ref={bottomRef} className="h-4" />
+                 <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 3.5 }} onClick={onClose} className="mt-8 text-red-600 hover:text-red-300 underline underline-offset-4 font-mono text-sm uppercase">[CLOSE TERMINAL]</motion.button>
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
+        )}
       </motion.div>
     </AnimatePresence>
   );
 };
 
+
 // --- DOMAIN CAROUSEL ---
 
-const tracks: Track[] = [
+// --- DOMAIN CONFIGURATION ---
+const tracks = [
   { 
-    title: "Shadow Tech", 
-    desc: "AI/ML solutions to detect anomalies in data streams.", 
-    image: "https://images.unsplash.com/photo-1605727216801-e27ce1d0cc28?q=80&w=2671&auto=format&fit=crop" 
+    title: "Housing Justice & Urban Belonging", 
+    domain: "Sanctuary Protocol",
+    desc: "Rebuild Hawkins. Create safe havens and sustainable housing solutions to protect citizens from the creeping Upside Down.", 
+    // Image: The creepy Creel House (Housing theme)
+    image: "house.jpg"},
+  { 
+    title: "Fintech & Financial Inclusion", 
+    domain: "Starcourt Economy",
+    desc: "Fund the resistance. Build secure, accessible financial systems to allocate resources for the war against Vecna.", 
+    // Image: Starcourt Mall Neon (Commerce/Finance theme)
+    image: "mall.jpg" 
   }, 
   { 
-    title: "Void Comm", 
-    desc: "Mesh networking apps for offline communication.", 
-    image: "https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?q=80&w=2674&auto=format&fit=crop" 
+    title: "AgriTech & Sustainability", 
+    domain: "Blight Defense",
+    desc: "Stop the rot. Develop agricultural tech to save the pumpkin patches and food supply from the toxicity of the shadow dimension.", 
+    // Image: The rotting pumpkin patch / vines (Agriculture theme)
+    image: "pumpkin.jpg" 
   }, 
   { 
-    title: "Mind Block", 
-    desc: "Cybersecurity defense against brute-force attacks.", 
-    image: "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=2670&auto=format&fit=crop" 
+    title: "EdTech & Skill Development", 
+    domain: "Cerebro Initiative",
+    desc: "Train the party. Use radio towers and digital platforms to share knowledge and upskill the next generation of monster hunters.", 
+    // Image: Dustin's Cerebro / Radio Tower (Communication/Learning theme)
+    image: "cerebro.jpg" 
   }, 
   { 
-    title: "Hive Data", 
-    desc: "Distributed storage for massive paranormal datasets.", 
-    image: "https://images.unsplash.com/photo-1618193139062-2c5bf4f935b7?q=80&w=2670&auto=format&fit=crop" 
+   title: "Environment & Sustainability", 
+    domain: "Terraform Protocol",
+    desc: "Heal the decay. Engineer bio-solutions to filter toxic spores and restore the ecological balance of our dimension.", 
+    // Image: The Upside Down with floating spores (Environment theme)
+    image: "ulta.jpg" 
   }, 
   { 
-    title: "Portal Dev", 
-    desc: "Full-stack gateways linking our world to the next.", 
-    image: "https://images.unsplash.com/photo-1542256844-311b7029598a?q=80&w=2669&auto=format&fit=crop" 
-  }, 
-  { 
-    title: "Strange Matter", 
-    desc: "Open innovation and hardware to close the gate.", 
-    image: "https://images.unsplash.com/photo-1511447333015-45b65e60f6d5?q=80&w=2755&auto=format&fit=crop" 
+    title: "Open Innovation", 
+    domain: "Project Nina",
+    desc: "Unlock human potential. Push the boundaries of science and psychic phenomena to close the gate for good.", 
+    // Image: Eleven in the Sensory Deprivation Tank / The Void (Innovation theme)
+    image: "eleven.webp" 
   }, 
 ];
-
-const TrackCard: React.FC<TrackCardProps> = ({ image, title, desc, position, onClick }) => {
+// --- UPGRADED "RIFT" CARD ---
+const TrackCard = ({ image, title, desc, position, onClick }: any) => {
+  const isActive = position === 0;
+  
+  // 3D Transforms based on position
   const variants = {
-    center: { x: "0%", scale: 1, zIndex: 50, opacity: 1, filter: "blur(0px) brightness(1)", rotateY: 0 },
-    left1: { x: "-50%", scale: 0.8, zIndex: 30, opacity: 0.7, filter: "blur(2px) brightness(0.6)", rotateY: 25 },
-    right1: { x: "50%", scale: 0.8, zIndex: 30, opacity: 0.7, filter: "blur(2px) brightness(0.6)", rotateY: -25 },
-    left2: { x: "-90%", scale: 0.6, zIndex: 10, opacity: 0.4, filter: "blur(5px) brightness(0.4)", rotateY: 45 },
-    right2: { x: "90%", scale: 0.6, zIndex: 10, opacity: 0.4, filter: "blur(5px) brightness(0.4)", rotateY: -45 },
-    hidden: { x: "0%", scale: 0.2, zIndex: 0, opacity: 0, filter: "blur(10px) brightness(0)", rotateY: 0 },
+    center: { x: "0%", scale: 1, zIndex: 50, opacity: 1, rotateY: 0, filter: "brightness(1) blur(0px)" },
+    left1: { x: "-50%", scale: 0.85, zIndex: 30, opacity: 0.6, rotateY: 25, filter: "brightness(0.5) blur(2px)" },
+    right1: { x: "50%", scale: 0.85, zIndex: 30, opacity: 0.6, rotateY: -25, filter: "brightness(0.5) blur(2px)" },
+    left2: { x: "-90%", scale: 0.7, zIndex: 10, opacity: 0.3, rotateY: 45, filter: "brightness(0.2) blur(5px)" },
+    right2: { x: "90%", scale: 0.7, zIndex: 10, opacity: 0.3, rotateY: -45, filter: "brightness(0.2) blur(5px)" },
+    hidden: { x: "0%", scale: 0.5, zIndex: 0, opacity: 0 },
   };
 
   const getVariant = () => {
@@ -780,32 +821,74 @@ const TrackCard: React.FC<TrackCardProps> = ({ image, title, desc, position, onC
     <motion.div
       animate={getVariant()}
       variants={variants}
-      transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }} 
+      transition={{ duration: 0.6, ease: "circOut" }}
       onClick={onClick}
-      className="absolute top-1/2 left-1/2 w-[350px] md:w-[600px] h-[400px] md:h-[450px] -translate-x-1/2 -translate-y-1/2 border border-red-900/50 bg-gray-900 backdrop-blur-md overflow-hidden rounded-2xl flex flex-col shadow-2xl cursor-pointer"
+      className={`absolute top-1/2 left-1/2 w-[340px] md:w-[600px] h-[450px] md:h-[500px] -translate-x-1/2 -translate-y-1/2 rounded-xl cursor-pointer perspective-1000`}
       style={{ transformStyle: 'preserve-3d' }}
     >
-      <div 
-        className="absolute inset-0 bg-cover bg-center transition-transform duration-700 bg-gray-900"
-        style={{ backgroundImage: `url(${image})` }}
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
-      
-      <div className="relative z-10 flex flex-col justify-end h-full p-8 gap-4">
-        <h3 className="text-3xl md:text-5xl font-bold text-white font-benguiat drop-shadow-[0_4px_8px_rgba(0,0,0,1)] border-b-4 border-red-600 pb-4 inline-block w-fit">
-          {title}
-        </h3>
-        <motion.p 
-          animate={{ opacity: position === 0 ? 1 : 0 }}
-          className="text-gray-100 font-mono text-sm md:text-lg leading-relaxed bg-black/50 p-4 rounded-lg backdrop-blur-sm border-l-2 border-red-500"
-        >
-          {desc}
-        </motion.p>
+      {/* THE CARD CONTAINER */}
+      <div className={`relative w-full h-full overflow-hidden rounded-xl border-2 transition-all duration-500 ${isActive ? 'border-red-500 shadow-[0_0_60px_rgba(220,38,38,0.5)]' : 'border-gray-800 bg-black'}`}>
+        
+        {/* 1. Background Image */}
+        <div 
+            className="absolute inset-0 bg-cover bg-center transition-transform duration-700"
+            style={{ 
+                backgroundImage: `url(${image})`,
+                transform: isActive ? 'scale(1.1)' : 'scale(1.0)',
+                filter: isActive ? 'grayscale(0%) contrast(1.1)' : 'grayscale(100%) contrast(1.5) brightness(0.5)'
+            }}
+        />
+
+        {/* 2. Overlays */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+        
+        {/* Active State: Red Veins & Particles */}
+        {isActive && (
+            <>
+                <div className="absolute inset-0 bg-red-600/10 mix-blend-overlay" />
+                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30 animate-pulse" />
+                {/* Scanline */}
+                <div className="absolute top-0 left-0 w-full h-1 bg-red-500/50 shadow-[0_0_15px_red] animate-[scanline_3s_linear_infinite]" />
+            </>
+        )}
+
+        {/* 3. Text Content */}
+        <div className="absolute bottom-0 left-0 w-full p-8 flex flex-col items-start gap-4 z-20">
+            
+            {/* Tech Badge */}
+            <div className={`px-3 py-1 rounded text-xs font-tech tracking-widest uppercase border ${isActive ? 'bg-red-600 text-white border-red-500' : 'bg-gray-800 text-gray-500 border-gray-700'}`}>
+                Classification: {isActive ? 'TOP SECRET' : 'RESTRICTED'}
+            </div>
+
+            <h3 className={`text-4xl md:text-5xl font-black font-benguiat uppercase leading-none ${isActive ? 'text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]' : 'text-gray-500'}`}>
+                {title}
+            </h3>
+
+            <motion.div 
+                animate={{ height: isActive ? 'auto' : 0, opacity: isActive ? 1 : 0 }}
+                className="overflow-hidden"
+            >
+                <p className="text-red-100 font-mono text-sm md:text-base border-l-2 border-red-500 pl-4 py-1 leading-relaxed max-w-md">
+                   {desc}
+                </p>
+                
+                {/* Fake Data Stream */}
+                <div className="mt-4 flex gap-1">
+                    <div className="h-1 w-8 bg-red-500 animate-pulse" />
+                    <div className="h-1 w-4 bg-red-500/50 animate-pulse delay-75" />
+                    <div className="h-1 w-2 bg-red-500/30 animate-pulse delay-150" />
+                </div>
+            </motion.div>
+        </div>
+
+        {/* 4. Glass Reflection (Gloss) */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-0 group-hover:opacity-100 pointer-events-none" />
       </div>
     </motion.div>
   );
 };
 
+// --- UPGRADED CAROUSEL CONTAINER ---
 const DomainCarousel = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -830,11 +913,18 @@ const DomainCarousel = () => {
 
   return (
     <div 
-      className="relative w-full flex flex-col items-center justify-center py-20 overflow-hidden min-h-[700px]"
+      className="relative w-full flex flex-col items-center justify-center py-24 overflow-hidden min-h-[800px]"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      <div className="relative h-[500px] w-full max-w-6xl mx-auto flex items-center justify-center perspective-1000" style={{ perspective: '1000px' }}>
+      {/* Background Radar Effect */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] border border-red-900/20 rounded-full z-0 pointer-events-none">
+         <div className="absolute inset-0 border border-red-900/10 rounded-full scale-75" />
+         <div className="absolute inset-0 border border-red-900/5 rounded-full scale-50" />
+      </div>
+
+      {/* 3D Perspective Container */}
+      <div className="relative h-[550px] w-full max-w-7xl mx-auto flex items-center justify-center perspective-1000 z-10" style={{ perspective: '1200px' }}>
         {tracks.map((track, index) => (
           <TrackCard 
             key={index} 
@@ -845,12 +935,24 @@ const DomainCarousel = () => {
         ))}
       </div>
 
-      <div className="flex gap-12 mt-12 z-50">
-        <button onClick={prevTrack} className="p-4 rounded-full bg-red-950/50 border border-red-600 text-white hover:bg-red-600 transition-all duration-300 transform hover:scale-110 shadow-[0_0_20px_rgba(229,9,20,0.3)]">
-          <ArrowLeft size={36} />
+      {/* Control Panel */}
+      <div className="flex items-center gap-12 mt-12 z-50">
+        <button onClick={prevTrack} className="group p-4 rounded-full bg-black border border-red-900 text-red-500 hover:bg-red-600 hover:text-white transition-all duration-300 hover:scale-110 shadow-[0_0_20px_rgba(220,38,38,0.2)]">
+          <ArrowLeft size={32} className="group-hover:-translate-x-1 transition-transform" />
         </button>
-        <button onClick={nextTrack} className="p-4 rounded-full bg-red-950/50 border border-red-600 text-white hover:bg-red-600 transition-all duration-300 transform hover:scale-110 shadow-[0_0_20px_rgba(229,9,20,0.3)]">
-          <ArrowRight size={36} />
+        
+        {/* Pagination Dots */}
+        <div className="flex gap-3">
+            {tracks.map((_, i) => (
+                <div 
+                    key={i} 
+                    className={`h-1.5 rounded-full transition-all duration-300 ${i === activeIndex ? 'w-8 bg-red-500 shadow-[0_0_10px_red]' : 'w-2 bg-gray-800'}`} 
+                />
+            ))}
+        </div>
+
+        <button onClick={nextTrack} className="group p-4 rounded-full bg-black border border-red-900 text-red-500 hover:bg-red-600 hover:text-white transition-all duration-300 hover:scale-110 shadow-[0_0_20px_rgba(220,38,38,0.2)]">
+          <ArrowRight size={32} className="group-hover:translate-x-1 transition-transform" />
         </button>
       </div>
     </div>
@@ -891,7 +993,8 @@ const TimelineItem: React.FC<TimelineItemProps> = ({ time, title, desc, align })
   </motion.div>
 );
 
-const PrizeCard = ({ rank, title, prize, color, scale = 1 }: any) => {
+const PrizeCard = ({ rank, title, prize, color, scale = 1, className = '' }: any) => {
+
   // Define colors based on rank
   const isGold = color === 'yellow';
   const isSilver = rank === 2;
@@ -906,7 +1009,14 @@ const PrizeCard = ({ rank, title, prize, color, scale = 1 }: any) => {
       animate={{ y: [0, -15, 0] }}
       transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: rank * 0.8 }}
       whileHover={{ scale: scale * 1.05, y: -25, zIndex: 100 }}
-      className="relative group flex flex-col items-center w-full md:w-1/3 min-h-[550px] rounded-xl transition-all duration-500 perspective-1000"
+      className={`
+  relative group flex flex-col items-center
+  w-full md:w-1/3 min-h-[550px]
+  rounded-xl transition-all duration-500
+  perspective-1000
+  ${className}
+`}
+
       style={{ transform: `scale(${scale})`, zIndex: rank === 1 ? 50 : 20 }}
     >
       
@@ -995,61 +1105,215 @@ const PrizeCard = ({ rank, title, prize, color, scale = 1 }: any) => {
   );
 };
 
-const OrganizersFooter = () => {
-  return (
-    // REVERTED: Removed huge margin-top and solid bg blocker to restore blending
-    <footer className="relative pt-32 pb-24 overflow-hidden z-20"> 
-      
-      {/* 1. Transparent Gradient to blend with section above */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/90 to-black pointer-events-none" />
+// --- FOOTER COMPONENTS (UPDATED WITH SOCIAL LINKS) ---
 
-      {/* Atmospheric Red Fog at bottom */}
-      <div className="absolute bottom-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_bottom,_rgba(220,38,38,0.15),_transparent_70%)] pointer-events-none" />
+// =========================================
+// UPDATED FOOTER & CLUB COMPONENTS
+// =========================================
+
+// 1. THE ORGANIZERS FOOTER CONTAINER
+const OrganizersFooter = () => {
+  // --- CONFIGURATION AREA: EDIT YOUR CLUB DETAILS HERE ---
+  const clubData = [
+    {
+      id: 1,
+      name: "CSI-COMPS",
+      // REPLACE with actual image URL (e.g., from imgur, or your public folder like '/logos/csi-comps.png')
+      logoSrc: "1.jpg", 
+      instaLink: "https://www.instagram.com/csifcrit/", // REPLACE with actual link
+      linkedinLink: "https://www.linkedin.com/company/csi-computer-fcrit/", // REPLACE with actual link
+    },
+    {
+      id: 2,
+      name: "CSI-IT",
+      logoSrc: "2.jpg", // REPLACE
+      instaLink: "https://www.instagram.com/csiitfcrit/", // REPLACE
+      linkedinLink: "https://www.linkedin.com/company/csi-it-fcrit/", // REPLACE
+    },
+    {
+      id: 3,
+      name: "AIDL",
+      logoSrc: "3.jpg", // REPLACE
+      instaLink: "https://www.instagram.com/aidl_fcrit/", // REPLACE
+      linkedinLink: "https://www.linkedin.com/company/artificial-intelligence-and-deep-learning-club-fcrit", // REPLACE
+    },
+  ];
+  // -------------------------------------------------------
+
+  return (
+    <footer className="relative pt-48 pb-24 overflow-hidden" id="footer-section">
+      
+      {/* Background Atmos Glow */}
+      <div className="absolute inset-0 pointer-events-none">
+         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/90 to-[#0a0000]" />
+         <div className="absolute bottom-[-20%] left-1/2 -translate-x-1/2 w-[150%] h-[80%] bg-[radial-gradient(ellipse_at_bottom,_var(--tw-gradient-stops))] from-red-700/40 via-red-950/40 to-transparent blur-[120px] mix-blend-screen" />
+      </div>
 
       <div className="relative z-10 container mx-auto px-4 text-center">
         
-        {/* LOGO SECTION - Enhanced Visibility */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.5 }}
-          className="mb-24 relative inline-block group"
-        >
-           {/* Darker Backing Circle to Isolate Logo */}
-           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-black/80 blur-3xl rounded-full" />
-           
-           {/* Red Ambient Glow (Subtle) */}
-           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[160%] h-[160%] bg-red-600/10 blur-[100px] rounded-full mix-blend-screen pointer-events-none" />
-           
-           {/* Huge Logo */}
-           
-        </motion.div>
-
-        <div className="flex items-center justify-center gap-4 mb-20 relative z-10">
+       
+         <div className="flex items-center justify-center gap-4 mb-20 relative z-10">
           <div className="h-[2px] w-16 bg-gradient-to-r from-transparent to-red-600 shadow-[0_0_10px_#ef4444]" />
           <span className="text-red-400 font-tech tracking-[0.5em] text-base uppercase drop-shadow-md">Orchestrated By</span>
           <div className="h-[2px] w-16 bg-gradient-to-l from-transparent to-red-600 shadow-[0_0_10px_#ef4444]" />
         </div>
-
-        <div className="flex flex-wrap justify-center items-center gap-16 md:gap-32 mb-24 relative z-10">
-           <ClubEntity name="CSI-COMPS" delay={0} />
-           <ClubEntity name="CSI-IT" delay={1} />
-           <ClubEntity name="AIDL" delay={2} />
+        {/* CLUBS GRID (Dynamic Rendering) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-20 md:gap-12 max-w-6xl mx-auto mb-32 items-start">
+           {clubData.map((club, index) => (
+             <ClubEntity 
+                key={club.id}
+                name={club.name}
+                logoSrc={club.logoSrc} // Passing unique logo
+                insta={club.instaLink} // Passing unique insta
+                linkedin={club.linkedinLink} // Passing unique linkedin
+                delay={index} 
+             />
+           ))}
         </div>
 
-        <div className="flex justify-center gap-12 mb-10 relative z-10">
-          <SocialLink icon={Github} />
-          <SocialLink icon={Linkedin} />
-          <SocialLink icon={Globe} />
+       {/* --- NEW SECTION: LOCATION INTEL (Address & Map) --- */}
+        <div className="max-w-5xl mx-auto mb-32 border-t border-red-900/30 pt-16">
+            <h4 className="text-red-500 font-tech text-sm tracking-[0.4em] uppercase mb-12 flex items-center justify-center gap-4">
+                <span className="w-12 h-[1px] bg-red-800" />
+                Target Coordinates
+                <span className="w-12 h-[1px] bg-red-800" />
+            </h4>
+
+            <div className="flex flex-col md:flex-row items-stretch gap-8 bg-black/40 border border-red-900/30 rounded-2xl overflow-hidden backdrop-blur-md relative group">
+                
+                {/* LEFT: Address Details */}
+                <div className="w-full md:w-1/3 p-8 md:p-12 flex flex-col justify-center text-left border-b md:border-b-0 md:border-r border-red-900/30 relative">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-600/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    
+                    <div className="flex items-start gap-4 mb-6">
+                        <div className="p-3 bg-red-900/20 rounded-lg text-red-500 animate-pulse">
+                            <MapPin size={28} />
+                        </div>
+                        <div>
+                            <h3 className="text-2xl font-benguiat text-gray-200 mb-2">FCRIT Vashi</h3>
+                            <p className="font-tech text-red-500/80 text-sm tracking-wider uppercase">Operational Base</p>
+                        </div>
+                    </div>
+
+                    <p className="text-gray-400 font-mono text-sm leading-relaxed mb-8">
+                        Agnel Technical Education Complex,<br/>
+                        Sector 9A, Vashi,<br/>
+                        Navi Mumbai, Maharashtra 400703
+                    </p>
+
+                    <a 
+                        href="https://maps.app.goo.gl/8dbQhkFJnoByz5EQ9" 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-2 text-red-400 hover:text-white font-tech uppercase tracking-widest text-sm transition-colors group/link"
+                    >
+                        <NavigationIcon size={16} className="group-hover/link:translate-x-1 transition-transform" />
+                        Initiate Navigation
+                    </a>
+                </div>
+
+                {/* RIGHT: Tactical Map (Dark Mode) */}
+                <div className="w-full md:w-2/3 h-64 md:h-auto relative overflow-hidden bg-[#1a1a1a]">
+                    {/* Scanner Effect */}
+                    <div className="absolute inset-0 z-20 pointer-events-none bg-[linear-gradient(transparent_2px,#000_3px)] bg-[length:100%_4px] opacity-20" />
+                    <motion.div 
+                        animate={{ top: ['-100%', '200%'] }}
+                        transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                        className="absolute left-0 w-full h-24 bg-red-500/10 blur-xl z-20 pointer-events-none border-b border-red-500/20"
+                    />
+
+                    {/* Google Map Iframe (FCRIT Vashi) */}
+                    {/* FILTER TRICK: grayscale + invert makes the light map look dark/hacker style */}
+                    {/* Google Map Iframe (FCRIT Vashi) */}
+                    <iframe 
+    src="https://maps.google.com/maps?q=Fr.+Conceicao+Rodrigues+Institute+of+Technology&t=&z=15&ie=UTF8&iwloc=&output=embed"
+    width="100%" 
+    height="100%" 
+    style={{ border: 0, filter: 'grayscale(100%) invert(90%) contrast(1.2) brightness(0.8)' }} 
+    allowFullScreen 
+    loading="lazy"
+    referrerPolicy="no-referrer-when-downgrade"
+    title="FCRIT Map"
+    className="absolute inset-0 opacity-80 hover:opacity-100 transition-opacity duration-500"
+></iframe>
+                </div>
+            </div>
         </div>
 
-        <div className="font-tech text-red-900/80 text-xs tracking-[0.3em] uppercase relative z-10">
-          FCRIT VASHI © 2026 <br/> HACKQUINOX
-        </div>
+        {/* Copyright */}
+        <p className="font-mono text-red-500/50 text-xs tracking-[0.3em] uppercase">
+          FCRIT VASHI <span className="text-red-600 mx-2">//</span> 2026
+        </p>
       </div>
     </footer>
   );
 };
+
+// 2. THE INDIVIDUAL CLUB CARD (Holographic Node Style - Full Color)
+// 2. THE INDIVIDUAL CLUB CARD (Rounded & Smooth)
+const ClubEntity = ({ name, logoSrc, insta, linkedin, delay }: any) => (
+  <motion.div 
+    initial={{ opacity: 0, y: 30 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    transition={{ delay: delay * 0.2, duration: 1, ease: "circOut" }}
+    viewport={{ once: true }}
+    className="group relative flex flex-col items-center"
+  >
+    {/* 1. LEVITATING LOGO (Now with Rounded Corners) */}
+    <motion.div 
+        animate={{ y: [-6, 6, -6] }} 
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: delay * 0.5 }}
+        className="relative z-20 w-36 h-36 md:w-44 md:h-44 flex items-center justify-center mb-8"
+    >
+       {/* Ambient Back Glow */}
+       <div className="absolute inset-0 bg-red-600/5 blur-[40px] rounded-full group-hover:bg-red-600/20 transition-all duration-500" />
+       
+       {/* THE LOGO IMAGE (Rounded Corners Added) */}
+       <img 
+         src={logoSrc} 
+         alt={`${name} Logo`} 
+         className="w-full h-full object-contain rounded-3xl filter brightness-110 transition-all duration-500 group-hover:scale-105 group-hover:drop-shadow-[0_0_25px_rgba(220,38,38,0.8)]" 
+       />
+    </motion.div>
+
+    {/* 2. THE ENTITY NAME */}
+    <h4 className="relative text-2xl font-benguiat text-gray-300 mb-6 tracking-widest uppercase group-hover:text-red-500 transition-colors duration-300">
+        {name}
+        {/* Underline Laser */}
+        <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-8 group-hover:w-3/4 h-[2px] bg-red-600/50 group-hover:bg-red-600 shadow-[0_0_10px_red] transition-all duration-500 ease-out" />
+    </h4>
+
+    {/* 3. SOCIAL NODES */}
+    <div className="flex items-center gap-5 mt-2">
+        {/* Instagram Node */}
+        <SocialNode icon={Instagram} link={insta} delay={0} />
+
+        {/* Vertical Divider Line */}
+        <div className="h-8 w-[1px] bg-gradient-to-b from-transparent via-red-900/50 to-transparent group-hover:via-red-500 transition-colors duration-500" />
+
+        {/* LinkedIn Node */}
+        <SocialNode icon={Linkedin} link={linkedin} delay={0.1} />
+    </div>
+
+  </motion.div>
+);
+
+// Helper Component: PERFECT CIRCLES
+const SocialNode = ({ icon: Icon, link, delay }: any) => (
+  <a 
+      href={link} 
+      target="_blank" 
+      rel="noreferrer"
+      // Added 'w-12 h-12 flex items-center justify-center rounded-full' to force a perfect circle
+      className="relative group/icon w-12 h-12 flex items-center justify-center rounded-full border border-red-900/30 bg-black/40 backdrop-blur-sm transition-all duration-300 hover:border-red-500 hover:bg-red-950 hover:scale-110 hover:shadow-[0_0_20px_rgba(220,38,38,0.5)]"
+  >
+      {/* Ping animation on hover */}
+      <div className="absolute inset-0 rounded-full border border-red-500/0 group-hover/icon:border-red-500/50 animate-ping opacity-0 group-hover/icon:opacity-50" style={{ animationDelay: `${delay}s` }} />
+      <Icon size={20} className="text-gray-500 group-hover/icon:text-white transition-colors duration-300" />
+  </a>
+);
+
+// --- UPDATED CLUB ENTITY CARD ---
 
 const MusicToggle = () => {
   const [isPlaying, setIsPlaying] = useState(true);
@@ -1075,16 +1339,179 @@ const MusicToggle = () => {
     </motion.button>
   );
 };
+// --- NEW COMPONENT: VOLUME ALERT ---
+const VolumeAlert = () => {
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: -50 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 1, delay: 1 }}
+      className="fixed top-4 left-1/2 -translate-x-1/2 z-[110] flex items-center gap-4 px-6 py-3 bg-red-900/80 backdrop-blur-md border border-red-500 rounded-full shadow-[0_0_20px_red]"
+    >
+      <div className="relative">
+        <Volume2 className="text-white w-6 h-6 animate-pulse" />
+        <div className="absolute inset-0 bg-white/50 blur-lg rounded-full animate-ping" />
+      </div>
+      <span className="text-white font-tech tracking-widest text-sm uppercase">
+        Incoming Transmission // Increase Volume
+      </span>
+    </motion.div>
+  );
+};
 
+// --- NEW COMPONENT: HOLOGRAPHIC NAVBAR ---
+// --- NEW COMPONENT: SLIDING NAVBAR (Fixed Logic) ---
+// --- NEW COMPONENT: STEALTH GLASS NAVBAR ---
+const NavbarOverlay = ({ isOpen, onClose, onOpenTerminal }: any) => {
+  const navItems = [
+    { label: "About", id: "about-section" },
+    { label: "Timeline", id: "timeline-section" },
+    { label: "Domains", id: "domains-section" },
+    { label: "Prizes", id: "prizes-section" },
+    { label: "Sponsors", id: "sponsors-section" },
+    { label: "Contact", id: "footer-section" },
+  ];
+
+  const handleScroll = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  return (
+    <AnimatePresence>
+        {isOpen && (
+            <motion.div 
+              initial={{ y: "-100%" }}
+              animate={{ y: "0%" }}
+              exit={{ y: "-100%" }}
+              transition={{ type: "spring", stiffness: 80, damping: 15 }} // Smooth hydraulic slide
+              className="fixed top-0 left-0 right-0 z-[120] h-20 md:h-24"
+            >
+              {/* 1. GLASS BACKGROUND (High Transparency) */}
+              <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent backdrop-blur-md shadow-[inset_0_0_30px_rgba(220,38,38,0.2)]" />
+              {/* 2. ANIMATED LASER SCANNER (The "Cool" Factor) */}
+              <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-red-900/30 overflow-hidden">
+                 <motion.div 
+                    animate={{ x: ["-100%", "100%"] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                    className="w-1/2 h-full bg-gradient-to-r from-transparent via-red-500 to-transparent box-shadow-[0_0_15px_#ef4444]"
+                 />
+              </div>
+
+              {/* 3. SUBTLE PULSING BORDER GLOW */}
+              <motion.div 
+                animate={{ opacity: [0.3, 0.6, 0.3] }}
+                transition={{ duration: 4, repeat: Infinity }}
+                className="absolute bottom-0 left-0 right-0 h-[1px] bg-red-600/20 blur-[2px]"
+              />
+
+              {/* CONTENT CONTAINER */}
+              <div className="relative max-w-7xl mx-auto px-6 h-full flex items-center justify-between z-10">
+                  
+                  {/* Left: Logo */}
+                  <div className="flex items-center gap-4 group cursor-default">
+                      <motion.div 
+                        animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                        className="w-2 h-2 bg-red-500 rounded-full shadow-[0_0_10px_red]" 
+                      />
+                      <span className="text-white/80 font-benguiat text-lg md:text-xl tracking-widest group-hover:text-red-500 transition-colors duration-300 drop-shadow-md">
+                        HACKQUINOX
+                      </span>
+                  </div>
+
+                  {/* Center: Desktop Links (Floating) */}
+                  <div className="hidden md:flex gap-10">
+                     {navItems.map((item) => (
+                       <button
+                         key={item.label}
+                         onClick={() => handleScroll(item.id)}
+                         className="relative text-gray-300/80 hover:text-white font-tech uppercase tracking-[0.2em] text-sm transition-all hover:scale-105 group"
+                       >
+                         {item.label}
+                         {/* Hover Underline */}
+                         <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-red-500 transition-all duration-300 group-hover:w-full box-shadow-[0_0_8px_red]" />
+                       </button>
+                     ))}
+                  </div>
+
+                  {/* Right: Action Button (Glass) */}
+                  
+              </div>
+              
+              {/* Mobile Menu (Minimalist) */}
+              <div className="md:hidden flex overflow-x-auto gap-6 px-6 pb-2 scrollbar-hide absolute bottom-0 translate-y-full left-0 right-0 bg-gradient-to-b from-black/60 to-transparent backdrop-blur-sm pt-2">
+                 {navItems.map((item) => (
+                   <button
+                     key={item.label}
+                     onClick={() => handleScroll(item.id)}
+                     className="text-gray-400 hover:text-red-500 font-tech uppercase tracking-widest text-xs whitespace-nowrap pb-2"
+                   >
+                     {item.label}
+                   </button>
+                 ))}
+              </div>
+            </motion.div>
+        )}
+    </AnimatePresence>
+  );
+};
+
+// --- NEW COMPONENT: SPONSORS SECTION ---
+const SponsorsSection = () => {
+    return (
+        <section id="sponsors-section" className="py-20 w-full relative">
+            <SectionHeading chapter="Chapter Four" title="The Benefactors" subtitle="Our Sponsors" align="center" />
+            
+            <div className="max-w-6xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 items-center justify-items-center opacity-80">
+                {/* Replace src with actual sponsor logos */}
+                {[1, 2, 3, 4].map((i) => (
+                    <motion.div 
+                        key={i}
+                        whileHover={{ scale: 1.1, filter: "brightness(1.5) drop-shadow(0 0 10px red)" }}
+                        className="w-32 h-32 md:w-48 md:h-32 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center p-4 grayscale hover:grayscale-0 transition-all duration-300"
+                    >
+                        <span className="font-tech text-gray-500">SPONSOR 0{i}</span>
+                    </motion.div>
+                ))}
+            </div>
+        </section>
+    );
+};
+
+// --- NEW COMPONENT: ABOUT US ---
+const AboutSection = () => (
+    <div id="about-section" className="max-w-3xl mx-auto text-center px-6 mt-20 mb-32 relative z-20">
+        <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            className="p-8 border-l-2 border-r-2 border-red-900/50 bg-black/40 backdrop-blur-sm"
+        >
+            <h3 className="text-red-500 font-tech mb-4 tracking-widest uppercase">Mission Briefing</h3>
+            <p className="text-gray-300 font-mono text-lg md:text-xl leading-relaxed">
+                Hackquinox is a 24-hour hackathon where the brightest minds converge to close the gate. 
+                We are looking for innovators, coders, and dreamers to build solutions that defy reality. 
+                The Upside Down is leaking—will you answer the call?
+            </p>
+        </motion.div>
+    </div>
+);
+
+// --- MAIN APP EXPORT ---
 export default function App() {
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [showTerminal, setShowTerminal] = useState(false);
+  // 1. ADD THIS NEW STATE FOR NAVBAR
+  const [showNavbar, setShowNavbar] = useState(false); 
+  
   const { scrollYProgress } = useScroll();
   const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
   const heroScale = useTransform(scrollYProgress, [0, 0.2], [1, 1.1]);
 
   useEffect(() => {
-    // Inject fonts
     const link = document.createElement('link');
     link.href = 'https://fonts.googleapis.com/css2?family=Merriweather:wght@900&family=Share+Tech+Mono&family=Inter:wght@400;600&display=swap';
     link.rel = 'stylesheet';
@@ -1094,6 +1521,8 @@ export default function App() {
   const handleEnter = () => {
     setAudioEnabled(true);
     bgMusic.play();
+    // 2. TRIGGER NAVBAR ON ENTER
+    setShowNavbar(true); 
   };
 
   const scrollToTimeline = () => {
@@ -1106,15 +1535,9 @@ export default function App() {
   return (
     <div className="bg-[#0B0B0B] min-h-screen text-white overflow-x-hidden selection:bg-red-900 selection:text-white relative font-['Inter']">
       
-      {/* 1. Global Effects */}
       <style>{`
-        @keyframes scanline {
-          0% { transform: translateY(-100%); }
-          100% { transform: translateY(100vh); }
-        }
-        .animate-scanline {
-          animation: scanline 4s linear infinite;
-        }
+        @keyframes scanline { 0% { transform: translateY(-100%); } 100% { transform: translateY(100vh); } }
+        .animate-scanline { animation: scanline 4s linear infinite; }
         .font-benguiat { font-family: 'Merriweather', serif; }
         .font-tech { font-family: 'Share Tech Mono', monospace; }
         .custom-scrollbar::-webkit-scrollbar { width: 8px; }
@@ -1122,80 +1545,71 @@ export default function App() {
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #880000; border-radius: 4px; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-        .clip-path-polygon {
-            clip-path: polygon(
-                20px 0, 100% 0, 
-                100% calc(100% - 20px), calc(100% - 20px) 100%, 
-                0 100%, 0 20px
-            );
-        }
       `}</style>
 
-      {/* 2. CRT/VHS Overlay + Film Grain */}
+      {/* Global Effects */}
+      <UpsideDownCursor />
       <FilmGrain />
-      <div className="fixed inset-0 z-50 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%] opacity-10" />
-      <div className="fixed inset-0 z-50 pointer-events-none shadow-[inset_0_0_150px_rgba(0,0,0,1)]" /> 
-
-      {/* 3. Background */}
+      <div className="fixed inset-0 z-50 pointer-events-none shadow-[inset_0_0_100px_rgba(0,0,0,0.5)]" /> 
       <BackgroundScene />
 
-      {/* 4. Modals */}
+      {/* 3. NAVBAR OVERLAY (Controlled by showNavbar state) */}
+      <NavbarOverlay 
+          isOpen={showNavbar} 
+          onClose={() => setShowNavbar(false)} 
+          onOpenTerminal={() => setShowTerminal(true)}
+      />
+
+      {/* Modals */}
       <TerminalModal isOpen={showTerminal} onClose={() => setShowTerminal(false)} />
+      
+      <AnimatePresence>
+        {audioEnabled && <VolumeAlert />}
+      </AnimatePresence>
+
       <AnimatePresence>
         {audioEnabled && <MusicToggle />}
       </AnimatePresence>
 
-      {/* 5. Main Content */}
+      {/* Main Content */}
       <main className="relative z-10">
         
-        {/* HERO */}
+        {/* HERO SECTION */}
         <section className="h-screen flex flex-col items-center justify-center relative px-4 perspective-1000">
           <motion.div 
             style={{ opacity: heroOpacity, scale: heroScale }} 
             className="text-center z-10 flex flex-col items-center"
           >
-            {/* Audio Toggle / Status */}
             {!audioEnabled && (
               <motion.div 
                 animate={{ opacity: [0.5, 1, 0.5] }}
                 transition={{ duration: 2, repeat: Infinity }}
                 className="mb-8 text-red-500 font-tech text-xs tracking-widest border border-red-900/50 px-4 py-1 rounded-full uppercase bg-black/50 backdrop-blur-sm"
               >
-                ⚠ Warning: Audio Hardware Detection Pending
+                ⚠ Warning: Increase Volume for Full Experience ⚠
               </motion.div>
             )}
 
-            <motion.p 
-              initial={{ opacity: 0, letterSpacing: '0em' }}
-              animate={{ opacity: 1, letterSpacing: '0.3em' }}
-              transition={{ duration: 2 }}
-              className="text-white font-benguiat mb-2 text-xl md:text-2xl uppercase tracking-widest drop-shadow-md"
-            >
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1, letterSpacing: '0.3em' }} transition={{ duration: 2 }} className="text-white font-benguiat mb-2 text-xl md:text-2xl uppercase tracking-widest drop-shadow-md">
               FCRIT VASHI
             </motion.p>
             
-            <motion.p 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              className="text-red-500 font-tech mb-6 text-sm uppercase tracking-[0.5em]"
-            >
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="text-red-500 font-tech mb-6 text-sm uppercase tracking-[0.5em]">
               Presents
             </motion.p>
             
-         <motion.h1 
-  initial={{ scale: 0.9, opacity: 0, textShadow: "0 0 0px #000" }}
-  animate={{ scale: 1, opacity: 1, textShadow: "0 0 30px rgba(229,9,20,0.5)" }}
-  transition={{ duration: 1.5, ease: "circOut" }}
-  className="text-6xl md:text-8xl lg:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-b from-red-500 via-red-600 to-red-900 font-benguiat uppercase tracking-tight leading-none mb-10 stroke-red-600"
-  style={{ WebkitTextStroke: '1px rgba(229,9,20,0.3)' }}
->
-  Hackquinox<br/>
-  {/* UPDATED SPAN: Smaller size, wider spacing */}
-  <span className="text-lg md:text-3xl tracking-[0.3em] block mt-6 text-red-500 font-bold opacity-80">
-  HACK THE UPSIDE DOWN
-</span>
-</motion.h1>
+            <motion.h1 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1, textShadow: "0 0 30px rgba(229,9,20,0.5)" }}
+              transition={{ duration: 1.5, ease: "circOut" }}
+              className="text-6xl md:text-8xl lg:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-b from-red-500 via-red-600 to-red-900 font-benguiat uppercase tracking-tight leading-none mb-10 stroke-red-600"
+              style={{ WebkitTextStroke: '1px rgba(229,9,20,0.3)' }}
+            >
+              Hackquinox<br/>
+              <span className="text-lg md:text-3xl tracking-[0.3em] block mt-6 text-red-500 font-bold opacity-80">
+                HACK THE UPSIDE DOWN
+              </span>
+            </motion.h1>
 
             {!audioEnabled ? (
                <motion.button 
@@ -1211,73 +1625,73 @@ export default function App() {
                 </div>
               </motion.button>
             ) : (
-              <motion.div 
+              <motion.button 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="flex flex-col md:flex-row gap-6 mt-4"
+                onClick={() => setShowNavbar(true)}
+                className="mt-8 px-8 py-3 bg-red-900/20 border border-red-600 text-red-500 hover:bg-red-600 hover:text-white font-tech uppercase tracking-widest transition-all rounded-full backdrop-blur-md"
               >
-                <button 
-                  onClick={() => setShowTerminal(true)}
-                  className="px-8 py-4 bg-red-600 text-black font-bold tracking-widest hover:bg-red-500 hover:shadow-[0_0_30px_rgba(229,9,20,0.6)] transition-all duration-300 uppercase font-tech rounded-full"
-                >
-                  Register Now
-                </button>
-                <button 
-                  onClick={scrollToTimeline}
-                  className="px-8 py-4 border border-gray-700 text-gray-400 font-bold tracking-widest hover:border-red-500 hover:text-red-500 transition-all duration-300 uppercase font-tech backdrop-blur-sm rounded-full"
-                >
-                  View Timeline
-                </button>
-              </motion.div>
+                OPEN MENU
+              </motion.button>
             )}
           </motion.div>
           
-          <motion.div 
-            animate={{ y: [0, 10, 0] }}
-            transition={{ repeat: Infinity, duration: 2 }}
-            className="absolute bottom-10 left-1/2 -translate-x-1/2 text-red-500/50"
-          >
+          <motion.div animate={{ y: [0, 10, 0] }} transition={{ repeat: Infinity, duration: 2 }} className="absolute bottom-10 left-1/2 -translate-x-1/2 text-red-500/50">
             <ChevronDown size={32} />
           </motion.div>
         </section>
 
-        {/* NARRATIVE BRIDGE 1 */}
+        {audioEnabled && <AboutSection />}
+        
         <StoryBridge text="Strange energy spikes have been detected coming from the Upside Down..." />
-
-        {/* PROBLEM STATEMENTS CAROUSEL */}
-        <section className="py-20 w-full relative">
+        
+        <section id="domains-section" className="py-20 w-full relative">
           <SectionHeading chapter="Chapter One" title="The Anomalies" subtitle="Choose your path" align="left" />
           <DomainCarousel />
         </section>
 
-        {/* NARRATIVE BRIDGE 2 */}
         <StoryBridge text="The Gate is opening. Time is running out to save the city..." />
 
-        {/* TIMELINE SECTION */}
         <section id="timeline-section" className="py-20 px-6 w-full relative">
            <SectionHeading chapter="Chapter Two" title="The Plan" subtitle="The Sequence of Events" align="left" />
-           
-           <div className="relative mt-24 max-w-6xl mx-auto">
-              {/* Vertical Line - The Vein */}
-              <div className="absolute top-0 left-1/2 w-1 h-full bg-red-900/30 -translate-x-1/2 hidden md:block rounded-full">
-                 <div className="w-full h-full bg-gradient-to-b from-red-600/50 via-red-900/50 to-red-600/50 animate-pulse shadow-[0_0_20px_#E50914]" />
+           <div className="relative mt-20 max-w-7xl mx-auto">
+              <div className="absolute top-0 left-1/2 w-1 h-full bg-red-900/30 -translate-x-1/2 hidden md:block">
+                 <div className="w-full h-full bg-red-600/50 animate-pulse shadow-[0_0_20px_#E50914]" />
               </div>
-              
-              <div className="space-y-24 md:space-y-32">
-                <TimelineItem time="09:00 AM" title="The Gathering" desc="Opening Ceremony & Problem Statement Reveal" align="left" />
-                <TimelineItem time="11:00 AM" title="Hacking Begins" desc="Gateway Opens. Teams start building." align="right" />
-                <TimelineItem time="04:00 PM" title="Mentoring Phase 1" desc="Expert guidance from the Upside Down." align="left" />
-                <TimelineItem time="09:00 PM" title="Dinner Break" desc="Refuel before the night shift." align="right" />
-                <TimelineItem time="08:00 AM" title="Final Submission" desc="Close the gate before it's too late." align="left" />
+              <div className="absolute top-0 left-4 w-0.5 h-full bg-red-900/50 md:hidden" />
+             <div className="space-y-24 md:space-y-32">
+                <TimelineItem 
+                    time="15TH JAN" 
+                    title="The Portal Opens" 
+                    desc="Registration Begins. Gather your party." 
+                    align="left" 
+                />
+                <TimelineItem 
+                    time="27TH JAN" 
+                    title="Gate Seals" 
+                    desc="Registration Closes. No new entries allowed." 
+                    align="right" 
+                />
+                <TimelineItem 
+                    time="1ST FEB" 
+                    title="The Chosen Few" 
+                    desc="Round 1 Results Announced. Who will enter the Upside Down?" 
+                    align="left" 
+                />
+                <TimelineItem 
+                    time="6TH-7TH FEB" 
+                    title="The Final Battle" 
+                    desc="Offline Hackathon. 24 Hours to save Hawkins." 
+                    align="right" 
+                />
               </div>
            </div>
         </section>
 
-        {/* NARRATIVE BRIDGE 3 */}
         <StoryBridge text="Only the brave will be rewarded for their efforts in the darkness..." />
 
-        {/* PRIZES SECTION */}
-        <section className="py-20 px-6 w-full relative overflow-hidden">
+       {/* --- FIXED PRIZES SECTION --- */}
+         <section id="prizes-section" className="py-20 px-6 w-full relative overflow-hidden">
            {/* Background Image */}
            <div 
               className="absolute inset-0 bg-cover bg-center opacity-20 mix-blend-overlay pointer-events-none"
@@ -1288,10 +1702,36 @@ export default function App() {
            <SectionHeading chapter="Chapter Three" title="Spoils of War" subtitle="Rewards" align="left" />
 
            <div className="flex flex-col md:flex-row justify-center items-end gap-12 mb-24 w-full relative z-10 max-w-7xl mx-auto pt-10">
-              <PrizeCard rank={2} title="2nd Place" prize="₹15,000" color="silver" scale={0.9} />
-              <PrizeCard rank={1} title="1st Place" prize="₹25,000" color="yellow" scale={1.1} />
-              <PrizeCard rank={3} title="3rd Place" prize="₹10,000" color="bronze" scale={0.9} />
-           </div>
+
+  <PrizeCard
+    rank={2}
+    title="2nd Place"
+    prize="₹15,000"
+    color="silver"
+    scale={0.9}
+    className="order-2 md:order-1"
+  />
+
+  <PrizeCard
+    rank={1}
+    title="1st Place"
+    prize="₹25,000"
+    color="yellow"
+    scale={1.1}
+    className="order-1 md:order-2"
+  />
+
+  <PrizeCard
+    rank={3}
+    title="3rd Place"
+    prize="₹10,000"
+    color="bronze"
+    scale={0.9}
+    className="order-3 md:order-3"
+  />
+
+</div>
+
 
            <div className="bg-gradient-to-r from-red-900/10 via-red-900/30 to-red-900/10 border-y border-red-900/50 p-12 text-center w-full mx-auto rounded-3xl backdrop-blur-sm relative z-10 max-w-6xl">
               <h3 className="text-3xl font-benguiat text-white mb-8">Participant Goodies</h3>
@@ -1303,8 +1743,8 @@ export default function App() {
               </div>
            </div>
         </section>
+        
 
-        {/* REGISTRATION CTA */}
         <section className="py-32 px-6 w-full relative">
            <div className="w-full relative overflow-hidden group rounded-3xl text-center shadow-[0_0_50px_rgba(229,9,20,0.3)] max-w-7xl mx-auto">
               <div 
@@ -1331,14 +1771,152 @@ export default function App() {
               </div>
            </div>
         </section>
+        <SponsorsSection />
 
-        {/* ORGANIZERS FOOTER */}
-        <OrganizersFooter />
+        <div id="footer-section">
+            <OrganizersFooter />
+        </div>
         
       </main>
     </div>
   );
 }
+// --- CUSTOM CURSOR COMPONENT ---
+// --- UNIQUE "HAWKINS APERTURE" CURSOR ---
+const springConfig = {
+  damping: 30,
+  stiffness: 500,
+  mass: 0.6,
+};
+
+const UpsideDownCursor = () => {
+  const x = useMotionValue(-100);
+  const y = useMotionValue(-100);
+
+  const springX = useSpring(x, springConfig);
+  const springY = useSpring(y, springConfig);
+
+  const velocityX = useVelocity(springX);
+  const velocityY = useVelocity(springY);
+
+  // Subtle rotation based on speed (kills jitter perception)
+  const dynamicRotate = useTransform(
+    [velocityX, velocityY],
+    ([vx, vy]) => Math.min(Math.hypot(vx, vy) / 45, 18)
+  );
+
+  const [hovering, setHovering] = useState(false);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const move = (e: PointerEvent) => {
+      x.set(e.clientX);
+      y.set(e.clientY);
+      if (!visible) setVisible(true);
+    };
+
+    const detectHover = (e: PointerEvent) => {
+      const target = e.target as HTMLElement;
+      setHovering(
+        Boolean(target.closest("button, a, input, .cursor-pointer"))
+      );
+    };
+
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerover", detectHover);
+
+    return () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerover", detectHover);
+    };
+  }, [visible]);
+
+  if (!visible) return null;
+
+  return (
+    <div className="fixed top-0 left-0 pointer-events-none z-[9999] mix-blend-difference">
+      
+      {/* CORE */}
+      <motion.div
+        className="absolute w-2 h-2 bg-red-500 rounded-full shadow-[0_0_18px_#ff0000]"
+        style={{
+          x,
+          y,
+          translateX: "-50%",
+          translateY: "-50%",
+        }}
+      />
+
+      {/* APERTURE */}
+      <motion.div
+        className="absolute"
+        style={{
+          x: springX,
+          y: springY,
+          translateX: "-50%",
+          translateY: "-50%",
+          rotate: dynamicRotate,
+        }}
+      >
+        <motion.div
+          animate={{
+            scale: hovering ? 1.25 : 1,
+          }}
+          transition={{
+            type: "spring",
+            stiffness: 260,
+            damping: 22,
+          }}
+          className="relative w-12 h-12"
+        >
+          {/* ARC 1 */}
+          <motion.div
+            className={`absolute inset-0 rounded-full border-t-2 ${
+              hovering
+                ? "border-white shadow-[0_0_12px_white]"
+                : "border-red-600"
+            }`}
+            animate={{ rotate: 360 }}
+            transition={{
+              repeat: Infinity,
+              duration: hovering ? 1.1 : 6,
+              ease: "linear",
+            }}
+          />
+
+          {/* ARC 2 */}
+          <motion.div
+            className={`absolute inset-2 rounded-full border-r-2 ${
+              hovering ? "border-white" : "border-red-800"
+            }`}
+            animate={{ rotate: -360 }}
+            transition={{
+              repeat: Infinity,
+              duration: hovering ? 1.6 : 9,
+              ease: "linear",
+            }}
+          />
+
+          {/* CROSSHAIR */}
+          <motion.div
+            animate={{
+              opacity: hovering ? 1 : 0,
+              scale: hovering ? 1 : 0.6,
+            }}
+            transition={{ duration: 0.2 }}
+            className="absolute inset-0"
+          >
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[2px] h-2 bg-white" />
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[2px] h-2 bg-white" />
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 h-[2px] w-2 bg-white" />
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 h-[2px] w-2 bg-white" />
+          </motion.div>
+        </motion.div>
+      </motion.div>
+    </div>
+  );
+};
+
 
 /*
   // --- INSTALLATION COMMANDS ---

@@ -1419,7 +1419,7 @@ const NavbarOverlay = ({ isOpen, onClose, onOpenTerminal }: any) => {
     { label: "Timeline", id: "timeline-section" },
     { label: "Domains", id: "domains-section" },
     { label: "Prizes", id: "prizes-section" },
-    { label: "Sponsors", id: "sponsors-section" },
+  // { label: "Sponsors", id: "sponsors-section" },
     { label: "Contact", id: "footer-section" },
   ];
 
@@ -1511,13 +1511,14 @@ const NavbarOverlay = ({ isOpen, onClose, onOpenTerminal }: any) => {
 };
 
 // --- NEW COMPONENT: SPONSORS SECTION ---
+{/*
 const SponsorsSection = () => {
     return (
         <section id="sponsors-section" className="py-20 w-full relative">
             <SectionHeading chapter="Chapter Four" title="The Benefactors" subtitle="Our Sponsors" align="center" />
             
             <div className="max-w-6xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 items-center justify-items-center opacity-80">
-                {/* Replace src with actual sponsor logos */}
+                
                 {[1, 2, 3, 4].map((i) => (
                     <motion.div 
                         key={i}
@@ -1531,7 +1532,7 @@ const SponsorsSection = () => {
         </section>
     );
 };
-
+*/}
 // --- NEW COMPONENT: ABOUT US ---
 const AboutSection = () => (
     <div id="about-section" className="max-w-3xl mx-auto text-center px-6 mt-20 mb-32 relative z-20">
@@ -1663,6 +1664,36 @@ export default function App() {
                 HACK THE UPSIDE DOWN
               </span>
             </motion.h1>
+
+            {/* --- POWERED BY UNSTOP (Upscaled) --- */}
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.8, duration: 1 }}
+            className="flex flex-col items-center gap-3 mb-12 relative z-20"
+          >
+              <span className="text-red-500/60 font-tech text-xs tracking-[0.4em] uppercase">
+                  Powered By
+              </span>
+              
+              <a 
+                href="https://unstop.com" 
+                target="_blank" 
+                rel="noreferrer"
+                className="group relative hover:scale-105 transition-transform duration-300"
+              >
+                  {/* Stronger Blue Glow on Hover */}
+                  <div className="absolute inset-0 bg-blue-500/40 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  
+                  {/* Unstop Logo (Bigger) */}
+                  <img 
+                    src="Unstop.png" 
+                    alt="Unstop" 
+                    // Changed size from h-6/h-8 to h-10/h-14
+                    className="h-10 md:h-14 w-auto object-contain opacity-80 group-hover:opacity-100 transition-opacity"
+                  />
+              </a>
+          </motion.div>
 
             {!audioEnabled ? (
                <motion.button 
@@ -1821,7 +1852,7 @@ export default function App() {
               </div>
            </div>
         </section>
-        <SponsorsSection />
+       {/* <SponsorsSection /> */}
 
         <div id="footer-section">
             <OrganizersFooter />

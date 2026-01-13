@@ -156,30 +156,49 @@ const bgMusic = new AudioController('/stranger-things-124008.mp3');
 
 
 // --- PRELOADER (With Video Background) ---
+// --- PRELOADER (With Video Background & Custom Logo) ---
 const Preloader = ({ onComplete }: { onComplete: () => void }) => {
   const [progress, setProgress] = useState(0);
-  const [text, setText] = useState("INITIALIZING PROTOCOL...");
+  const [hasStarted, setHasStarted] = useState(false); // Waits for user click
+  const [text, setText] = useState("SYSTEM DETECTED");
+  
+  // Use a ref for the audio so we can control it precisely
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    // 1. Simulate loading progress
+    // Create audio object once
+    audioRef.current = new Audio('/tudum.mp3');
+    audioRef.current.volume = 0.6;
+  }, []);
+
+  useEffect(() => {
+    if (!hasStarted) return; // Don't run progress bar until clicked
+
+    // 1. PLAY SOUND
+    if (audioRef.current) {
+        audioRef.current.play().catch(e => console.error("Audio failed:", e));
+    }
+
+    // 2. START PROGRESS BAR
     const timer = setInterval(() => {
       setProgress((prev) => {
-        const next = prev + Math.random() * 5;
+        const next = prev + Math.random() * 4; 
         if (next >= 100) {
           clearInterval(timer);
           return 100;
         }
         return next;
       });
-    }, 50);
+    }, 60);
 
-    // 2. Text sequence
-    const t1 = setTimeout(() => setText("BYPASSING FIREWALL..."), 800);
-    const t2 = setTimeout(() => setText("CONNECTING TO UPSIDE DOWN..."), 1800);
+    // 3. TEXT SEQUENCE
+    setText("INITIALIZING PROTOCOL...");
+    const t1 = setTimeout(() => setText("BYPASSING FIREWALL..."), 1000);
+    const t2 = setTimeout(() => setText("ESTABLISHING UPLINK..."), 2200);
     const t3 = setTimeout(() => {
-      setText("ACCESS GRANTED.");
-      onComplete(); // Triggers the exit
-    }, 3000);
+      setText("WELCOME TO HAWKINS.");
+      setTimeout(onComplete, 800); 
+    }, 3800);
 
     return () => {
       clearInterval(timer);
@@ -187,57 +206,93 @@ const Preloader = ({ onComplete }: { onComplete: () => void }) => {
       clearTimeout(t2);
       clearTimeout(t3);
     };
-  }, [onComplete]);
+  }, [hasStarted, onComplete]);
 
   return (
     <motion.div
       initial={{ opacity: 1 }}
-      exit={{ opacity: 0, filter: "blur(20px)", scale: 1.1 }}
-      transition={{ duration: 0.8, ease: "easeInOut" }}
-      className="fixed inset-0 z-[999] bg-black flex flex-col items-center justify-center font-mono overflow-hidden"
+      exit={{ opacity: 0, filter: "blur(30px)", scale: 1.2 }}
+      transition={{ duration: 1.2, ease: "easeInOut" }}
+      className="fixed inset-0 z-[999] bg-black flex flex-col items-center justify-center font-mono overflow-hidden cursor-pointer"
+      // THE MAGIC FIX: User interaction here allows audio to play
+      onClick={() => !hasStarted && setHasStarted(true)} 
     >
-      {/* --- NEW: VIDEO BACKGROUND LAYER --- */}
-      <div className="absolute inset-0 z-0">
+      {/* --- BACKGROUND VIDEO --- */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
           <video
             autoPlay
             loop
             muted
             playsInline
             src="/video.mp4" 
-            className="w-full h-full object-cover mix-blend-screen"
+            className="w-full h-full object-cover opacity-70 mix-blend-screen"
           />
-          {/* Dark Overlay to ensure text readability */}
-          <div className="absolute inset-0 bg-black/80" />
+          <div className="absolute inset-0 bg-black/70" />
       </div>
 
-      {/* --- CONTENT LAYER (Your Logic) --- */}
-      <div className="relative z-10 w-full max-w-md px-6">
-        <h1 className="text-red-500 text-xl md:text-3xl font-black tracking-widest mb-8 animate-pulse text-center drop-shadow-[0_0_10px_rgba(220,38,38,0.8)]">
-          {text}
-        </h1>
+      {/* --- CONTENT --- */}
+      <div className="relative z-10 w-full max-w-xl px-6 flex flex-col items-center">
         
-        {/* Progress Bar */}
-        <div className="w-full h-2 bg-red-900/30 rounded-full overflow-hidden border border-red-900/50 relative">
-          <motion.div 
-            className="h-full bg-red-600 shadow-[0_0_20px_#ef4444]"
-            style={{ width: `${progress}%` }}
-          />
-          {/* Scanline Effect inside bar */}
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.4),transparent)] animate-[shimmer_1s_infinite]" />
-        </div>
+        {/* LOGO */}
+        <motion.div 
+            animate={!hasStarted ? { scale: [1, 1.05, 1], opacity: [0.6, 0.8, 0.6] } : { scale: 1, opacity: 0.6 }}
+            transition={!hasStarted ? { repeat: Infinity, duration: 3 } : {}}
+            className="relative mb-16"
+        >
+            <img 
+                src="/logo.png" 
+                alt="Team Logo"
+                className="relative z-10 w-72 h-72 md:w-[30rem] md:h-[30rem] object-contain opacity-60 drop-shadow-[0_5px_15px_rgba(0,0,0,0.9)]"
+            />
+        </motion.div>
 
-        <div className="flex justify-between mt-2 text-red-800 text-xs tracking-wider">
-          <span>SYS.ROOT.ADMIN</span>
-          <span>{Math.floor(progress)}%</span>
-        </div>
+        {/* --- STATE 1: CLICK TO START (Before Click) --- */}
+        {!hasStarted ? (
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex flex-col items-center gap-4"
+            >
+                <p className="text-red-500 font-bold tracking-[0.3em] text-sm animate-pulse">
+                    [ CLICK ANYWHERE TO INITIALIZE ]
+                </p>
+                {/* Fingerprint or Power Icon decoration */}
+                <div className="w-12 h-12 border border-red-500/30 rounded-full flex items-center justify-center">
+                    <div className="w-8 h-8 bg-red-600/20 rounded-full animate-ping" />
+                </div>
+            </motion.div>
+        ) : (
+            /* --- STATE 2: LOADING BAR (After Click) --- */
+            <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="w-full flex flex-col items-center"
+            >
+                <h1 className="text-red-500 text-lg md:text-2xl font-black tracking-widest mb-6 text-center drop-shadow-[0_0_10px_rgba(220,38,38,0.8)]">
+                {text}
+                </h1>
+                
+                <div className="w-full h-3 bg-black/50 rounded-full overflow-hidden border border-red-900/50 relative backdrop-blur-sm">
+                    <motion.div 
+                        className="h-full bg-gradient-to-r from-red-900 via-red-600 to-red-500 shadow-[0_0_20px_#ef4444]"
+                        style={{ width: `${progress}%` }}
+                    />
+                    <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)] animate-[shimmer_1.5s_infinite]" />
+                </div>
+
+                <div className="flex justify-between mt-3 text-red-800/70 font-bold text-xs tracking-[0.2em] w-full">
+                    <span>SYS.ROOT.ADMIN</span>
+                    <span>{Math.floor(progress)}%</span>
+                </div>
+            </motion.div>
+        )}
       </div>
       
-      {/* --- GLITCH OVERLAY (Your Effect) --- */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%] opacity-20 pointer-events-none z-20" />
+      {/* OVERLAYS */}
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_3px,3px_100%] opacity-40 pointer-events-none z-20" />
     </motion.div>
   );
 };
-
 // --- 2. BASIC COMPONENTS ---
 
 const BriefcaseIcon = ({ size, className }: { size: number; className?: string }) => (
@@ -681,8 +736,8 @@ const TerminalModal = ({ isOpen, onClose }: any) => {
                         <div className="px-3 py-1 bg-green-900/50 border border-green-500 text-green-400 text-xs tracking-widest rounded">ACCESS GRANTED</div>
                      </div>
                      <p className="text-gray-400 text-sm leading-relaxed">
-                        Preliminary aptitude test. Solve the riddles to find the coordinates.
-                        <br/><span className="text-red-400 mt-2 block"> CLICK TO ENTER PORTAL</span>
+                        The Gateway coordinates have shifted to the Unstop Mainframe for the Initial FIGHT.
+                        <br/><span className="text-red-400 mt-2 block"> INITIATE JUMP TO UNSTOP</span>
                      </p>
                    </div>
                    <div className="w-full h-32 bg-black/50 rounded border border-red-900/50 flex items-center justify-center relative overflow-hidden">
@@ -807,63 +862,94 @@ const tracks = [
     domain: "Sanctuary Protocol",
     desc: "Rebuild Hawkins. Create safe havens and sustainable housing solutions to protect citizens from the creeping Upside Down.", 
     // Image: The creepy Creel House (Housing theme)
-    image: "house.jpg"},
+    image: "house.jpg",
+  ps1: "Develop a privacy-first, offline-capable PWA ('Sanctuary Protocol') to bridge the critical disconnect between urban temporary housing resources and displaced individuals. The platform must aggregate fragmented shelter data into a 'Smart Discovery Interface,' offering frictionless, verified matching based on specific needs (gender, accessibility, pets) without mandatory login. Crucially, the system must function in low-connectivity 'Dead Zones' via optimized data caching (<50KB) and include an emergency protocol for one-tap location sharing to ensure rapid access during crisis situations.",
+    ps2: "Engineer a decentralized, anonymous reporting ecosystem to expose systemic housing abuses and protect the tenant community. The platform must leverage NLP to automatically classify threats (Safety, Harassment, Maintenance) and generate real-time 'Risk Heatmaps' of problematic neighborhoods. By aggregating verified grievances into transparent Landlord Profiles, the system will empower tenants to identify repeat offenders before signing leases, preventing future exploitation through data-driven collective intelligence."},
   { 
     title: "Fintech & Financial Inclusion", 
     domain: "Starcourt Economy",
     desc: "Fund the resistance. Build secure, accessible financial systems to allocate resources for the war against Vecna.", 
     // Image: Starcourt Mall Neon (Commerce/Finance theme)
-    image: "mall.jpg" 
+    image: "mall.jpg" ,
+    ps1: "Construct a modular AI-driven financial advisory council designed to democratize personalized wealth management for India's youth. The system must deploy four specialized agents—Budget, Savings, Debt, and Investment—to analyze user profiles and synthesize holistic, actionable financial roadmaps. By simulating 'Current' vs. 'Optimized' financial trajectories, the platform will replace expensive human consultation with data-driven strategies, empowering users to combat lifestyle inflation and build long-term economic resilience.",
+    ps2: "Develop an AI-powered sentiment validation engine to democratize institutional-grade market analysis for retail investors. The system must aggregate and decode high-volume social signals and news for NIFTY 50 companies, using NLP to quantify 'hype' versus genuine market sentiment. Crucially, the platform must backtest these sentiment scores against historical price data, providing a verifiable 'Signal Correlation' dashboard that proves the strategy's win rate over speculative guesswork."
+    
   }, 
   { 
     title: "AgriTech & Sustainability", 
     domain: "Blight Defense",
     desc: "Stop the rot. Develop agricultural tech to save the pumpkin patches and food supply from the toxicity of the shadow dimension.", 
     // Image: The rotting pumpkin patch / vines (Agriculture theme)
-    image: "pumpkin.jpg" 
+    image: "pumpkin.jpg" ,
+    ps1: "Engineer an offline-first computer vision diagnostic tool to safeguard the livelihoods of India's marginal farmers. The platform must deploy a lightweight AI model (<50MB) capable of detecting crop diseases from leaf images with high accuracy, even in low-connectivity environments. By offering instant, multilingual treatment protocols and minimizing reliance on expensive expert consultations, the system aims to arrest crop yield losses and curb excessive pesticide usage.",
+    ps2: "Engineer a mobile-first 'Citizen Science' sentinel system to combat the $423 billion threat of biological invasion. The platform must deploy a lightweight computer vision model to instantly distinguish between harmful invasive species (e.g., Lantana) and native flora, even in offline 'Dead Zones'. By crowdsourcing geotagged sightings into a real-time 'Bio-Invasion Heatmap', the system empowers the public to act as environmental guardians, enabling early detection and rapid response to ecological threats."
   }, 
   { 
     title: "EdTech & Skill Development", 
     domain: "Cerebro Initiative",
     desc: "Train the party. Use radio towers and digital platforms to share knowledge and upskill the next generation of monster hunters.", 
     // Image: Dustin's Cerebro / Radio Tower (Communication/Learning theme)
-    image: "cerebro.jpg" 
+    image: "cerebro.jpg" ,
+    ps1: "Architect an adaptive, domain-specific upskilling ecosystem to bridge the employability gap for engineering students beyond standard DSA. The platform must offer hands-on, adaptive challenges in emerging fields like AI/ML, IoT, and Cybersecurity, providing real-time feedback and 'Skill Gap Analysis'. By generating actionable mastery dashboards for both students and Placement Officers, the system enables targeted interventions that align academic training with industry demands.",
+    ps2: "Develop an AI-powered cognitive bridge to democratize access to complex academic knowledge. The platform must ingest dense lecture materials and instantly transmute them into structured, plain-language summaries with auto-generated glossaries and assessment quizzes. By offering a 'Dual-View' interface that toggles between original and simplified text, the system reduces cognitive load for diverse learners, ensuring equitable comprehension without diluting the core curriculum."
   }, 
   { 
    title: "Environment & Sustainability", 
     domain: "Terraform Protocol",
     desc: "Heal the decay. Engineer bio-solutions to filter toxic spores and restore the ecological balance of our dimension.", 
     // Image: The Upside Down with floating spores (Environment theme)
-    image: "ulta.jpg" 
+    image: "ulta.jpg" ,
+    ps1: "Engineer a cognitive-first web assistant to de-clutter the digital experience for neurodiverse users (ADHD, Dyslexia, Autism). The tool must act as a 'Visual Noise Filter,' dynamically stripping ads, sidebars, and repetitive navigation to present a 'Simplify Mode' or 'Focus Mode' overlay. By leveraging DOM analysis to isolate essential content and extract instant summaries, the system drastically reduces cognitive load, enabling users to complete critical tasks without distraction.",
+    ps2: "Engineer an explainable AI document assistant to demystify complex legal and financial texts for vulnerable users. The platform must ingest documents and provide plain-language answers to critical queries, explicitly highlighting the source evidence to eliminate the 'Black Box' problem. By auto-extracting key obligations, dates, and risks into a transparent 5-point summary, the system empowers users to sign agreements with full comprehension and zero ambiguity."
   }, 
   { 
     title: "Open Innovation", 
     domain: "Project Nina",
     desc: "Unlock human potential. Push the boundaries of science and psychic phenomena to close the gate for good.", 
     // Image: Eleven in the Sensory Deprivation Tank / The Void (Innovation theme)
-    image: "eleven.webp" 
+    image: "eleven.webp" ,
+    ps1: "Acknowledging that radical innovation often defies categorization, this track challenges teams to identify and neutralize unique, real-world friction points outside standard domains. Whether leveraging AI, Cybersecurity, IoT, or Systems Engineering, the objective is to architect an original, feasible solution driven by personal insight. Teams must deliver a functional, demo-ready prototype that addresses a clearly defined pain point, prioritizing tangible impact and creative engineering over theoretical concepts.", // Special flag
+    
   }, 
 ];
 // --- UPGRADED "RIFT" CARD ---
-const TrackCard = ({ image, title, desc, position, onClick }: any) => {
+// --- FIXED FLIP CARD (Original Width Restored) ---
+const TrackCard = ({ image, title, domain, ps1, ps2, position, onClick }: any) => {
   const isActive = position === 0;
-  
-  // 3D Transforms based on position
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [showPs2, setShowPs2] = useState(false); 
+
+  useEffect(() => {
+    if (!isActive) {
+        setIsFlipped(false);
+        setShowPs2(false);
+    }
+  }, [isActive, title]);
+
+  const isOpenInnovation = title === "Open Innovation";
+
   const variants = {
+    
+
     center: { x: "0%", scale: 1, zIndex: 50, opacity: 1, rotateY: 0, filter: "brightness(1) blur(0px)" },
+
     left1: { x: "-50%", scale: 0.85, zIndex: 30, opacity: 0.6, rotateY: 25, filter: "brightness(0.5) blur(2px)" },
+
     right1: { x: "50%", scale: 0.85, zIndex: 30, opacity: 0.6, rotateY: -25, filter: "brightness(0.5) blur(2px)" },
+
     left2: { x: "-90%", scale: 0.7, zIndex: 10, opacity: 0.3, rotateY: 45, filter: "brightness(0.2) blur(5px)" },
+
     right2: { x: "90%", scale: 0.7, zIndex: 10, opacity: 0.3, rotateY: -45, filter: "brightness(0.2) blur(5px)" },
+
     hidden: { x: "0%", scale: 0.5, zIndex: 0, opacity: 0 },
+
+ 
   };
 
   const getVariant = () => {
     if (position === 0) return "center";
     if (position === -1) return "left1";
     if (position === 1) return "right1";
-    if (position === -2) return "left2";
-    if (position === 2) return "right2";
     return "hidden";
   };
 
@@ -872,73 +958,134 @@ const TrackCard = ({ image, title, desc, position, onClick }: any) => {
       animate={getVariant()}
       variants={variants}
       transition={{ duration: 0.6, ease: "circOut" }}
-      onClick={onClick}
+      // --- RESTORED ORIGINAL WIDTH & HEIGHT HERE ---
       className={`absolute top-1/2 left-1/2 w-[340px] md:w-[600px] h-[450px] md:h-[500px] -translate-x-1/2 -translate-y-1/2 rounded-xl cursor-pointer perspective-1000`}
-      style={{ transformStyle: 'preserve-3d' }}
     >
-      {/* THE CARD CONTAINER */}
-      <div className={`relative w-full h-full overflow-hidden rounded-xl border-2 transition-all duration-500 ${isActive ? 'border-red-500 shadow-[0_0_60px_rgba(220,38,38,0.5)]' : 'border-gray-800 bg-black'}`}>
-        
-        {/* 1. Background Image */}
+      {/* FLIP CONTAINER */}
+      <motion.div
+        initial={false}
+        animate={{ rotateY: isFlipped ? 180 : 0 }}
+        transition={{ duration: 0.6, animationDirection: "normal" }}
+        className="w-full h-full relative"
+        style={{ transformStyle: "preserve-3d" }}
+        onClick={(e) => {
+             if(isActive) {
+                 // @ts-ignore
+                 if(e.target.tagName !== 'BUTTON') setIsFlipped(!isFlipped);
+             } else {
+                 onClick(); 
+             }
+        }}
+      >
+        {/* === FRONT FACE === */}
         <div 
-            className="absolute inset-0 bg-cover bg-center transition-transform duration-700"
-            style={{ 
-                backgroundImage: `url(${image})`,
-                transform: isActive ? 'scale(1.1)' : 'scale(1.0)',
-                filter: isActive ? 'grayscale(0%) contrast(1.1)' : 'grayscale(100%) contrast(1.5) brightness(0.5)'
-            }}
-        />
+            className="absolute inset-0 w-full h-full backface-hidden rounded-xl overflow-hidden border-2 border-gray-800 bg-black"
+            style={{ backfaceVisibility: 'hidden' }}
+        >
+             <div 
+                className="absolute inset-0 bg-cover bg-center"
+                style={{ 
+                    backgroundImage: `url(${image})`,
+                    filter: isActive ? 'grayscale(0%) contrast(1.1)' : 'grayscale(100%) contrast(1.5) brightness(0.5)'
+                }}
+             />
+             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+             
+             {isActive && !isFlipped && (
+                 <div className="absolute top-0 left-0 w-full h-1 bg-red-500/50 shadow-[0_0_15px_red] animate-[scanline_3s_linear_infinite]" />
+             )}
 
-        {/* 2. Overlays */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
-        
-        {/* Active State: Red Veins & Particles */}
-        {isActive && (
-            <>
-                <div className="absolute inset-0 bg-red-600/10 mix-blend-overlay" />
-                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30 animate-pulse" />
-                {/* Scanline */}
-                <div className="absolute top-0 left-0 w-full h-1 bg-red-500/50 shadow-[0_0_15px_red] animate-[scanline_3s_linear_infinite]" />
-            </>
-        )}
-
-        {/* 3. Text Content */}
-        <div className="absolute bottom-0 left-0 w-full p-8 flex flex-col items-start gap-4 z-20">
-            
-            {/* Tech Badge */}
-            <div className={`px-3 py-1 rounded text-xs font-tech tracking-widest uppercase border ${isActive ? 'bg-red-600 text-white border-red-500' : 'bg-gray-800 text-gray-500 border-gray-700'}`}>
-                Classification: {isActive ? 'TOP SECRET' : 'RESTRICTED'}
-            </div>
-
-            <h3 className={`text-4xl md:text-5xl font-black font-benguiat uppercase leading-none ${isActive ? 'text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]' : 'text-gray-500'}`}>
-                {title}
-            </h3>
-
-            <motion.div 
-                animate={{ height: isActive ? 'auto' : 0, opacity: isActive ? 1 : 0 }}
-                className="overflow-hidden"
-            >
-                <p className="text-red-100 font-mono text-sm md:text-base border-l-2 border-red-500 pl-4 py-1 leading-relaxed max-w-md">
-                   {desc}
-                </p>
-                
-                {/* Fake Data Stream */}
-                <div className="mt-4 flex gap-1">
-                    <div className="h-1 w-8 bg-red-500 animate-pulse" />
-                    <div className="h-1 w-4 bg-red-500/50 animate-pulse delay-75" />
-                    <div className="h-1 w-2 bg-red-500/30 animate-pulse delay-150" />
-                </div>
-            </motion.div>
+             <div className="absolute bottom-0 left-0 w-full p-8 flex flex-col gap-2">
+                 <div className="bg-red-900/80 text-red-200 text-xs font-tech w-fit px-2 py-1 rounded border border-red-500/50 backdrop-blur-md">
+                    {domain}
+                 </div>
+                 <h3 className="text-4xl md:text-5xl font-black font-benguiat text-white uppercase drop-shadow-lg leading-none">
+                    {title}
+                 </h3>
+                 {isActive && (
+                    <div className="mt-4 flex items-center gap-2 text-red-400 font-mono text-xs animate-pulse">
+                        <span>CLICK TO DECLASSIFY FILE</span>
+                        <ArrowRight size={14} />
+                    </div>
+                 )}
+             </div>
         </div>
 
-        {/* 4. Glass Reflection (Gloss) */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-0 group-hover:opacity-100 pointer-events-none" />
-      </div>
+        {/* === BACK FACE === */}
+        <div 
+            className="absolute inset-0 w-full h-full backface-hidden rounded-xl overflow-hidden border-2 border-red-600 bg-black p-8 flex flex-col"
+            style={{ 
+                backfaceVisibility: 'hidden', 
+                transform: 'rotateY(180deg)',
+                backgroundImage: "url('https://www.transparenttextures.com/patterns/cubes.png')"
+            }}
+        >
+            <div className="absolute inset-0 bg-red-900/10 pointer-events-none" />
+            
+            <div className="flex justify-between items-center border-b border-red-800 pb-4 mb-4 z-10">
+                <span className="text-red-500 font-tech tracking-[0.3em] text-xs uppercase">TOP SECRET // {domain}</span>
+                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_10px_red]" />
+            </div>
+
+            <div className="flex-1 overflow-y-auto custom-scrollbar relative z-10 pr-2">
+                 <h3 className="text-2xl font-benguiat text-white mb-6 uppercase">{title}</h3>
+
+                 {!isOpenInnovation && (
+                    <div className="flex w-full mb-6 border border-red-900 rounded overflow-hidden">
+                        <button 
+                           onClick={() => setShowPs2(false)}
+                           className={`flex-1 py-3 text-xs font-bold tracking-widest uppercase transition-all ${!showPs2 ? 'bg-red-600 text-white' : 'bg-black text-red-500 hover:bg-red-900/20'}`}
+                        >
+                           Problem Statement 1
+                        </button>
+                        <div className="w-px bg-red-900" />
+                        <button 
+                           onClick={() => setShowPs2(true)}
+                           className={`flex-1 py-3 text-xs font-bold tracking-widest uppercase transition-all ${showPs2 ? 'bg-red-600 text-white' : 'bg-black text-red-500 hover:bg-red-900/20'}`}
+                        >
+                           Problem Statement 2
+                        </button>
+                    </div>
+                 )}
+
+                 <div className="bg-black/50 border border-red-900/50 p-6 rounded text-gray-300 font-mono text-sm md:text-base leading-relaxed">
+                     {isOpenInnovation ? (
+                        <div className="text-center py-8">
+                            
+                            <p className="text-red-400 font-bold tracking-widest mb-4">PROTOCOL: UNRESTRICTED</p>
+                            <p>Identifying constraints... NONE FOUND.</p>
+                            <p className="mt-4 text-white">Innovate without boundaries.</p>
+                        </div>
+                     ) : (
+                        <motion.div
+                           key={showPs2 ? 'ps2' : 'ps1'}
+                           initial={{ opacity: 0, x: 10 }}
+                           animate={{ opacity: 1, x: 0 }}
+                           transition={{ duration: 0.3 }}
+                        >
+                            <span className="text-red-500 font-bold block mb-2 text-xs tracking-widest">
+                                {showPs2 ? ">> SECONDARY OBJECTIVE:" : ">> PRIMARY OBJECTIVE:"}
+                            </span>
+                            {showPs2 ? ps2 : ps1}
+                        </motion.div>
+                     )}
+                 </div>
+            </div>
+
+            <button 
+                onClick={() => setIsFlipped(false)}
+                className="mt-4 w-full py-3 border border-red-800 text-red-500 hover:bg-red-900/20 hover:text-white transition-colors font-tech uppercase tracking-widest text-xs z-10"
+            >
+                [ CLOSE FILE ]
+            </button>
+        </div>
+
+      </motion.div>
     </motion.div>
   );
 };
 
-// --- UPGRADED CAROUSEL CONTAINER ---
+// --- 3. DOMAIN CAROUSEL (Unchanged Logic, just passes new props) ---
 const DomainCarousel = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -947,7 +1094,7 @@ const DomainCarousel = () => {
     if (isPaused) return;
     const interval = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % tracks.length);
-    }, 4000);
+    }, 5000); // Increased time slightly for reading
     return () => clearInterval(interval);
   }, [isPaused]);
 
@@ -963,18 +1110,18 @@ const DomainCarousel = () => {
 
   return (
     <div 
-      className="relative w-full flex flex-col items-center justify-center py-24 overflow-hidden min-h-[800px]"
+      className="relative w-full flex flex-col items-center justify-center py-24 overflow-hidden min-h-[900px]"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Background Radar Effect */}
+      {/* Background Radar */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] border border-red-900/20 rounded-full z-0 pointer-events-none">
          <div className="absolute inset-0 border border-red-900/10 rounded-full scale-75" />
          <div className="absolute inset-0 border border-red-900/5 rounded-full scale-50" />
       </div>
 
-      {/* 3D Perspective Container */}
-      <div className="relative h-[550px] w-full max-w-7xl mx-auto flex items-center justify-center perspective-1000 z-10" style={{ perspective: '1200px' }}>
+      {/* 3D Container */}
+      <div className="relative h-[600px] w-full max-w-7xl mx-auto flex items-center justify-center perspective-1000 z-10">
         {tracks.map((track, index) => (
           <TrackCard 
             key={index} 
@@ -985,19 +1132,15 @@ const DomainCarousel = () => {
         ))}
       </div>
 
-      {/* Control Panel */}
-      <div className="flex items-center gap-12 mt-12 z-50">
+      {/* Controls */}
+      <div className="flex items-center gap-12 mt-4 z-50">
         <button onClick={prevTrack} className="group p-4 rounded-full bg-black border border-red-900 text-red-500 hover:bg-red-600 hover:text-white transition-all duration-300 hover:scale-110 shadow-[0_0_20px_rgba(220,38,38,0.2)]">
           <ArrowLeft size={32} className="group-hover:-translate-x-1 transition-transform" />
         </button>
         
-        {/* Pagination Dots */}
         <div className="flex gap-3">
             {tracks.map((_, i) => (
-                <div 
-                    key={i} 
-                    className={`h-1.5 rounded-full transition-all duration-300 ${i === activeIndex ? 'w-8 bg-red-500 shadow-[0_0_10px_red]' : 'w-2 bg-gray-800'}`} 
-                />
+                <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${i === activeIndex ? 'w-8 bg-red-500 shadow-[0_0_10px_red]' : 'w-2 bg-gray-800'}`} />
             ))}
         </div>
 
@@ -1008,7 +1151,6 @@ const DomainCarousel = () => {
     </div>
   );
 };
-
 const TimelineItem: React.FC<TimelineItemProps> = ({ time, title, desc, align }) => (
   <motion.div 
     initial={{ opacity: 0, y: 50 }}
@@ -1430,28 +1572,29 @@ const NavbarOverlay = ({ isOpen, onClose, onOpenTerminal }: any) => {
     }
   };
 
-  return (
+ return (
     <AnimatePresence>
         {isOpen && (
             <motion.div 
               initial={{ y: "-100%" }}
               animate={{ y: "0%" }}
               exit={{ y: "-100%" }}
-              transition={{ type: "spring", stiffness: 80, damping: 15 }} // Smooth hydraulic slide
+              transition={{ type: "spring", stiffness: 80, damping: 15 }} 
               className="fixed top-0 left-0 right-0 z-[120] h-20 md:h-24"
             >
-              {/* 1. GLASS BACKGROUND (High Transparency) */}
+              {/* 1. GLASS BACKGROUND */}
               <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent backdrop-blur-md shadow-[inset_0_0_30px_rgba(220,38,38,0.2)]" />
-              {/* 2. ANIMATED LASER SCANNER (The "Cool" Factor) */}
+              
+              {/* 2. LASER SCANNER */}
               <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-red-900/30 overflow-hidden">
-                 <motion.div 
+                  <motion.div 
                     animate={{ x: ["-100%", "100%"] }}
                     transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
                     className="w-1/2 h-full bg-gradient-to-r from-transparent via-red-500 to-transparent box-shadow-[0_0_15px_#ef4444]"
-                 />
+                  />
               </div>
 
-              {/* 3. SUBTLE PULSING BORDER GLOW */}
+              {/* 3. BORDER GLOW */}
               <motion.div 
                 animate={{ opacity: [0.3, 0.6, 0.3] }}
                 transition={{ duration: 4, repeat: Infinity }}
@@ -1461,48 +1604,56 @@ const NavbarOverlay = ({ isOpen, onClose, onOpenTerminal }: any) => {
               {/* CONTENT CONTAINER */}
               <div className="relative max-w-7xl mx-auto px-6 h-full flex items-center justify-between z-10">
                   
-                  {/* Left: Logo */}
-                  <div className="flex items-center gap-4 group cursor-default">
-                      <motion.div 
-                        animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                        className="w-2 h-2 bg-red-500 rounded-full shadow-[0_0_10px_red]" 
+                  {/* --- LEFT: LOGO + TEXT --- */}
+                  <div 
+                    className="flex items-center gap-3 cursor-pointer group" 
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  >
+                      {/* Logo Image */}
+                      <img 
+                        src="/logo-cropped.png" 
+                        alt="Logo" 
+                        // Adjusted size to fit nicely in navbar. 
+                        // w-12 is standard, but you can change back to w-40 if your logo is very wide.
+                        className="w-16 w-16 object-contain relative z-10 group-hover:scale-110 transition-transform duration-300" 
                       />
-                      <span className="text-white/80 font-benguiat text-lg md:text-xl tracking-widest group-hover:text-red-500 transition-colors duration-300 drop-shadow-md">
-                        HACKQUINOX
+
+                      {/* Text Name */}
+                      <span className="text-white/90 font-benguiat text-xl tracking-widest group-hover:text-red-500 transition-colors duration-300 drop-shadow-md pt-1">
+                        HackQuinox
                       </span>
                   </div>
 
-                  {/* Center: Desktop Links (Floating) */}
+                  {/* --- CENTER: DESKTOP LINKS --- */}
                   <div className="hidden md:flex gap-10">
-                     {navItems.map((item) => (
-                       <button
-                         key={item.label}
-                         onClick={() => handleScroll(item.id)}
-                         className="relative text-gray-300/80 hover:text-white font-tech uppercase tracking-[0.2em] text-sm transition-all hover:scale-105 group"
-                       >
-                         {item.label}
-                         {/* Hover Underline */}
-                         <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-red-500 transition-all duration-300 group-hover:w-full box-shadow-[0_0_8px_red]" />
-                       </button>
-                     ))}
+                      {navItems.map((item) => (
+                        <button
+                          key={item.label}
+                          onClick={() => handleScroll(item.id)}
+                          className="relative text-gray-300/80 hover:text-white font-tech uppercase tracking-[0.2em] text-sm transition-all hover:scale-105 group"
+                        >
+                          {item.label}
+                          <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-red-500 transition-all duration-300 group-hover:w-full box-shadow-[0_0_8px_red]" />
+                        </button>
+                      ))}
                   </div>
 
-                  {/* Right: Action Button (Glass) */}
+                  {/* --- RIGHT: SPACER (Balances the layout) --- */}
+                  <div className="w-20 hidden md:block" /> 
                   
               </div>
               
-              {/* Mobile Menu (Minimalist) */}
+              {/* MOBILE MENU */}
               <div className="md:hidden flex overflow-x-auto gap-6 px-6 pb-2 scrollbar-hide absolute bottom-0 translate-y-full left-0 right-0 bg-gradient-to-b from-black/60 to-transparent backdrop-blur-sm pt-2">
-                 {navItems.map((item) => (
-                   <button
-                     key={item.label}
-                     onClick={() => handleScroll(item.id)}
-                     className="text-gray-400 hover:text-red-500 font-tech uppercase tracking-widest text-xs whitespace-nowrap pb-2"
-                   >
-                     {item.label}
-                   </button>
-                 ))}
+                  {navItems.map((item) => (
+                    <button
+                      key={item.label}
+                      onClick={() => handleScroll(item.id)}
+                      className="text-gray-400 hover:text-red-500 font-tech uppercase tracking-widest text-xs whitespace-nowrap pb-2"
+                    >
+                      {item.label}
+                    </button>
+                  ))}
               </div>
             </motion.div>
         )}
@@ -1543,7 +1694,7 @@ const AboutSection = () => (
         >
             <h3 className="text-red-500 font-tech mb-4 tracking-widest uppercase">Mission Briefing</h3>
             <p className="text-gray-300 font-mono text-lg md:text-xl leading-relaxed">
-                Hackquinox is a 24-hour hackathon where the brightest minds converge to close the gate. 
+                Hackquinox is a 10-hour hackathon where the brightest minds converge to close the gate. 
                 We are looking for innovators, coders, and dreamers to build solutions that defy reality. 
                 The Upside Down is leaking—will you answer the call?
             </p>
@@ -1558,6 +1709,8 @@ export default function App() {
   // 1. ADD THIS NEW STATE FOR NAVBAR
     const [loading, setLoading] = useState(true); // Added loading state
   const [showNavbar, setShowNavbar] = useState(false); 
+  // Add this inside your App component
+const [isButtonVisible, setIsButtonVisible] = useState(true);
   
   const { scrollYProgress } = useScroll();
   const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
@@ -1570,10 +1723,15 @@ export default function App() {
     document.head.appendChild(link);
   }, []);
 
-  const handleEnter = () => {
+ const handleEnter = () => {
+    // 1. Fade out the button
+    setIsButtonVisible(false);
+
+    // 2. Play Audio
     setAudioEnabled(true);
-    bgMusic.play();
-    // 2. TRIGGER NAVBAR ON ENTER
+    if (typeof bgMusic !== 'undefined') bgMusic.play();
+    
+    // 3. Open the actual Navbar Overlay
     setShowNavbar(true); 
   };
 
@@ -1695,33 +1853,43 @@ export default function App() {
               </a>
           </motion.div>
 
-            {!audioEnabled ? (
-               <motion.button 
-                onClick={handleEnter}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="group relative px-10 py-5 bg-transparent overflow-hidden rounded-full"
-              >
-                <div className="absolute inset-0 w-full h-full bg-red-600/10 border border-red-600/50 group-hover:bg-red-600/20 transition-all duration-300 transform skew-x-12" />
-                <div className="relative flex items-center gap-3 text-red-500 font-bold tracking-[0.2em] font-tech uppercase group-hover:text-red-400">
-                  <Play size={18} className="fill-current" />
-                  Enter The Event
-                </div>
-              </motion.button>
-            ) : (
-              <motion.button 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                onClick={() => setShowNavbar(true)}
-                className="mt-8 px-8 py-3 bg-red-900/20 border border-red-600 text-red-500 hover:bg-red-600 hover:text-white font-tech uppercase tracking-widest transition-all rounded-full backdrop-blur-md"
-              >
-                OPEN MENU
-              </motion.button>
-            )}
+           {/* --- ANIMATED BUTTON (Disappears on Click) --- */}
+          <div className="absolute bottom-32 left-0 right-0 flex justify-center z-50">
+            <AnimatePresence>
+                {isButtonVisible && (
+                   <motion.button 
+                    key="start-btn"
+                    onClick={handleEnter}
+                    
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    
+                    // EXIT: Blur and Scale Out
+                    exit={{ 
+                        opacity: 0, 
+                        scale: 1.5, 
+                        filter: "blur(20px)", 
+                        transition: { duration: 0.8, ease: "easeOut" } 
+                    }}
+
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    
+                    className="group relative px-10 py-5 bg-transparent overflow-hidden rounded-full cursor-pointer"
+                  >
+                    <div className="absolute inset-0 w-full h-full bg-red-600/10 border border-red-600/50 group-hover:bg-red-600/20 transition-all duration-300 transform skew-x-12" />
+                    <div className="relative flex items-center gap-3 text-red-500 font-bold tracking-[0.2em] font-tech uppercase group-hover:text-red-400">
+                      <Play size={18} className="fill-current" />
+                      Enter The Event
+                    </div>
+                  </motion.button>
+                )}
+            </AnimatePresence>
+          </div>
           </motion.div>
           
           <motion.div animate={{ y: [0, 10, 0] }} transition={{ repeat: Infinity, duration: 2 }} className="absolute bottom-10 left-1/2 -translate-x-1/2 text-red-500/50">
-            <ChevronDown size={32} />
+            <ChevronDown size={56} />
           </motion.div>
         </section>
 
@@ -1762,11 +1930,20 @@ export default function App() {
                     desc="Round 1 Results Announced. Who will enter the Upside Down?" 
                     align="left" 
                 />
+               {/* 1. THE HACKATHON (Top 20 Teams) */}
                 <TimelineItem 
-                    time="6TH-7TH FEB" 
-                    title="The Final Battle" 
-                    desc="Offline Hackathon. 24 Hours to save Hawkins." 
+                    time="6TH FEB" 
+                    title="Operation: Close The Gate" 
+                    desc="The Top 20 Squads descend into the arena. 10 hours to engineer the ultimate weapon and seal the breach." 
                     align="right" 
+                />
+
+                {/* 2. THE FINAL 8 (Presentations) */}
+                <TimelineItem 
+                    time="7TH FEB" 
+                    title="The Final Stand" 
+                    desc="Only the elite 8 survive the night. Present your defense strategy to the High Council." 
+                    align="left" 
                 />
               </div>
            </div>

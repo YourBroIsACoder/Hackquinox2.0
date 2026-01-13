@@ -727,7 +727,7 @@ const TerminalModal = ({ isOpen, onClose }: any) => {
                 <motion.div 
                    whileHover={{ scale: 1.02, borderColor: '#ef4444' }}
                    className="group relative w-full md:w-1/2 h-80 border border-red-900 bg-red-950/20 rounded-xl p-8 flex flex-col justify-between overflow-hidden cursor-pointer"
-                   onClick={() => window.open('https://your-google-form-link.com', '_blank')}
+                   onClick={() => window.open('https://unstop.com/o/21U5F3u?lb=xQWvaErs&utm_medium=Share&utm_source=floydcar21615&utm_campaign=Online_coding_challenge', '_blank')}
                 >
                    <div className="absolute inset-0 bg-red-600/0 group-hover:bg-red-600/10 transition-colors" />
                    <div>
@@ -965,7 +965,7 @@ const TrackCard = ({ image, title, domain, ps1, ps2, position, onClick }: any) =
       <motion.div
         initial={false}
         animate={{ rotateY: isFlipped ? 180 : 0 }}
-        transition={{ duration: 0.6, animationDirection: "normal" }}
+        //transition={{ duration: 0.6, animationDirection: "normal" }}
         className="w-full h-full relative"
         style={{ transformStyle: "preserve-3d" }}
         onClick={(e) => {

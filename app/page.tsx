@@ -240,7 +240,7 @@ const Preloader = ({ onComplete }: { onComplete: () => void }) => {
             className="relative mb-16"
         >
             <img 
-                src="/logo.png" 
+                src="/logo.PNG" 
                 alt="Team Logo"
                 className="relative z-10 w-72 h-72 md:w-[30rem] md:h-[30rem] object-contain opacity-60 drop-shadow-[0_5px_15px_rgba(0,0,0,0.9)]"
             />

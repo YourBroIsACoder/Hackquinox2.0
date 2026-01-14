@@ -240,7 +240,7 @@ const Preloader = ({ onComplete }: { onComplete: () => void }) => {
             className="relative mb-16"
         >
             <img 
-                src="/logo.PNG" 
+                src="/logo-og.PNG" 
                 alt="Team Logo"
                 className="relative z-10 w-72 h-72 md:w-[30rem] md:h-[30rem] object-contain opacity-60 drop-shadow-[0_5px_15px_rgba(0,0,0,0.9)]"
             />
@@ -1611,7 +1611,7 @@ const NavbarOverlay = ({ isOpen, onClose, onOpenTerminal }: any) => {
                   >
                       {/* Logo Image */}
                       <img 
-                        src="/logo-cropped.png" 
+                        src="/logo-cropped.PNG" 
                         alt="Logo" 
                         // Adjusted size to fit nicely in navbar. 
                         // w-12 is standard, but you can change back to w-40 if your logo is very wide.
@@ -2057,17 +2057,27 @@ const UpsideDownCursor = () => {
   const velocityX = useVelocity(springX);
   const velocityY = useVelocity(springY);
 
-  // Subtle rotation based on speed (kills jitter perception)
- const dynamicRotate = useTransform(
-  [velocityX, velocityY],
-  // FIX: Explicitly type the incoming array as 'any' or '[number, number]'
-  ([vx, vy]: any[]) => Math.min(Math.hypot(vx, vy) / 45, 18)
-);
+  // Rotation based on movement speed
+  const dynamicRotate = useTransform(
+    [velocityX, velocityY],
+    ([vx, vy]: any) => {
+      const speed = Math.hypot(vx as number, vy as number);
+      return Math.min(speed / 45, 18);
+    }
+  );
 
   const [hovering, setHovering] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
+    // Check if device has a mouse
+    const mediaQuery = window.matchMedia("(pointer: fine)");
+    setIsMobile(!mediaQuery.matches);
+
+    // If it's a touch device, don't even add listeners
+    if (!mediaQuery.matches) return;
+
     const move = (e: PointerEvent) => {
       x.set(e.clientX);
       y.set(e.clientY);
@@ -2088,16 +2098,17 @@ const UpsideDownCursor = () => {
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerover", detectHover);
     };
-  }, [visible]);
+  }, [visible, x, y]);
 
-  if (!visible) return null;
+  // Completely kill rendering on mobile or before first movement
+  if (isMobile || !visible) return null;
 
   return (
-    <div className="fixed top-0 left-0 pointer-events-none z-[9999] mix-blend-difference">
+    <div className="fixed top-0 left-0 pointer-events-none z-[9999] mix-blend-difference hidden md:block">
       
-      {/* CORE */}
+      {/* CORE DOT */}
       <motion.div
-        className="absolute w-2 h-2 bg-red-500 rounded-full shadow-[0_0_18px_#ff0000]"
+        className="absolute w-2 h-2 bg-red-500 rounded-full shadow-[0_0_15px_#ff0000]"
         style={{
           x,
           y,
@@ -2106,7 +2117,7 @@ const UpsideDownCursor = () => {
         }}
       />
 
-      {/* APERTURE */}
+      {/* OUTER APERTURE */}
       <motion.div
         className="absolute"
         style={{
@@ -2119,56 +2130,56 @@ const UpsideDownCursor = () => {
       >
         <motion.div
           animate={{
-            scale: hovering ? 1.25 : 1,
+            scale: hovering ? 1.3 : 1,
           }}
           transition={{
             type: "spring",
-            stiffness: 260,
-            damping: 22,
+            stiffness: 300,
+            damping: 20,
           }}
           className="relative w-12 h-12"
         >
-          {/* ARC 1 */}
+          {/* SPINNING ARC 1 (Outer) */}
           <motion.div
             className={`absolute inset-0 rounded-full border-t-2 ${
               hovering
-                ? "border-white shadow-[0_0_12px_white]"
+                ? "border-white shadow-[0_0_15px_white]"
                 : "border-red-600"
             }`}
             animate={{ rotate: 360 }}
             transition={{
               repeat: Infinity,
-              duration: hovering ? 1.1 : 6,
+              duration: hovering ? 0.8 : 4,
               ease: "linear",
             }}
           />
 
-          {/* ARC 2 */}
+          {/* SPINNING ARC 2 (Inner) */}
           <motion.div
             className={`absolute inset-2 rounded-full border-r-2 ${
-              hovering ? "border-white" : "border-red-800"
+              hovering ? "border-white" : "border-red-900"
             }`}
             animate={{ rotate: -360 }}
             transition={{
               repeat: Infinity,
-              duration: hovering ? 1.6 : 9,
+              duration: hovering ? 1.2 : 6,
               ease: "linear",
             }}
           />
 
-          {/* CROSSHAIR */}
+          {/* TARGET CROSSHAIR */}
           <motion.div
+            initial={{ opacity: 0 }}
             animate={{
               opacity: hovering ? 1 : 0,
-              scale: hovering ? 1 : 0.6,
+              scale: hovering ? 1 : 0.5,
             }}
-            transition={{ duration: 0.2 }}
             className="absolute inset-0"
           >
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[2px] h-2 bg-white" />
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[2px] h-2 bg-white" />
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 h-[2px] w-2 bg-white" />
-            <div className="absolute right-0 top-1/2 -translate-y-1/2 h-[2px] w-2 bg-white" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1px] h-2 bg-white" />
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[1px] h-2 bg-white" />
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 h-[1px] w-2 bg-white" />
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 h-[1px] w-2 bg-white" />
           </motion.div>
         </motion.div>
       </motion.div>

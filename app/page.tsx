@@ -224,8 +224,8 @@ const Preloader = ({ onComplete }: { onComplete: () => void }) => {
             loop
             muted
             playsInline
-            src="/video.mp4" 
-            className="w-full h-full object-cover opacity-70 mix-blend-screen"
+            src="/video2copy.mp4" 
+            className="w-full h-full object-cover mix-blend-screen"
           />
           <div className="absolute inset-0 bg-black/70" />
       </div>
@@ -234,6 +234,7 @@ const Preloader = ({ onComplete }: { onComplete: () => void }) => {
       <div className="relative z-10 w-full max-w-xl px-6 flex flex-col items-center">
         
         {/* LOGO */}
+          {/*
         <motion.div 
             animate={!hasStarted ? { scale: [1, 1.05, 1], opacity: [0.6, 0.8, 0.6] } : { scale: 1, opacity: 0.6 }}
             transition={!hasStarted ? { repeat: Infinity, duration: 3 } : {}}
@@ -244,7 +245,7 @@ const Preloader = ({ onComplete }: { onComplete: () => void }) => {
                 alt="Team Logo"
                 className="relative z-10 w-72 h-72 md:w-[30rem] md:h-[30rem] object-contain opacity-60 drop-shadow-[0_5px_15px_rgba(0,0,0,0.9)]"
             />
-        </motion.div>
+        </motion.div>*/}
 
         {/* --- STATE 1: CLICK TO START (Before Click) --- */}
         {!hasStarted ? (
@@ -1070,7 +1071,23 @@ const TrackCard = ({ image, title, domain, ps1, ps2, position, onClick }: any) =
                         </motion.div>
                      )}
                  </div>
+                 <p className="text-gray-300 font-tech text-sm leading-relaxed">
+  {domain.abstract} {/* Your existing abstract text */}
+  
+  <span className="block mt-4 text-red-500/80 border-t border-red-900/30 pt-3 italic">
+    [!] SYSTEM NOTE: Data truncated. Decrypt full mission brief and 
+    technical specs at the 
+    <a 
+      href="https://unstop.com/o/21U5F3u?lb=xQWvaErs&utm_medium=Share&utm_source=floydcar21615&utm_campaign=Online_coding_challenge" 
+      target="_blank" 
+      className="ml-1 underline decoration-red-600 underline-offset-4 hover:text-red-400"
+    >
+      UNSTOP TERMINAL &gt;_
+    </a>
+  </span>
+</p>
             </div>
+            
 
             <button 
                 onClick={() => setIsFlipped(false)}
@@ -1787,111 +1804,114 @@ const [isButtonVisible, setIsButtonVisible] = useState(true);
       <main className="relative z-10">
         
         {/* HERO SECTION */}
-        <section className="h-screen flex flex-col items-center justify-center relative px-4 perspective-1000">
-          <motion.div 
-            style={{ opacity: heroOpacity, scale: heroScale }} 
-            className="text-center z-10 flex flex-col items-center"
-          >
-            {!audioEnabled && (
-              <motion.div 
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="mb-8 text-red-500 font-tech text-xs tracking-widest border border-red-900/50 px-4 py-1 rounded-full uppercase bg-black/50 backdrop-blur-sm"
-              >
-                ⚠ Warning: Increase Volume for Full Experience ⚠
-              </motion.div>
-            )}
+        <section className="h-screen flex flex-col items-center justify-center relative px-4 perspective-1000 overflow-hidden">
+  
+  {/* --- ANIMATED TEXT CONTAINER (Fades and Scales on Scroll) --- */}
+  <motion.div 
+    style={{ opacity: heroOpacity, scale: heroScale }} 
+    className="text-center z-10 flex flex-col items-center"
+  >
+    {!audioEnabled && (
+      <motion.div 
+        animate={{ opacity: [0.5, 1, 0.5] }}
+        transition={{ duration: 2, repeat: Infinity }}
+        className="mb-8 text-red-500 font-tech text-xs tracking-widest border border-red-900/50 px-4 py-1 rounded-full uppercase bg-black/50 backdrop-blur-sm"
+      >
+        ⚠ Warning: Increase Volume for Full Experience ⚠
+      </motion.div>
+    )}
 
-            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1, letterSpacing: '0.3em' }} transition={{ duration: 2 }} className="text-white font-benguiat mb-2 text-xl md:text-2xl uppercase tracking-widest drop-shadow-md">
-              FCRIT VASHI
-            </motion.p>
-            
-            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="text-red-500 font-tech mb-6 text-sm uppercase tracking-[0.5em]">
-              Presents
-            </motion.p>
-            
-            <motion.h1 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1, textShadow: "0 0 30px rgba(229,9,20,0.5)" }}
-              transition={{ duration: 1.5, ease: "circOut" }}
-              className="text-6xl md:text-8xl lg:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-b from-red-500 via-red-600 to-red-900 font-benguiat uppercase tracking-tight leading-none mb-10 stroke-red-600"
-              style={{ WebkitTextStroke: '1px rgba(229,9,20,0.3)' }}
-            >
-              Hackquinox<br/>
-              <span className="text-lg md:text-3xl tracking-[0.3em] block mt-6 text-red-500 font-bold opacity-80">
-                HACK THE UPSIDE DOWN
-              </span>
-            </motion.h1>
+    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1, letterSpacing: '0.3em' }} transition={{ duration: 2 }} className="text-white font-benguiat mb-2 text-xl md:text-2xl uppercase tracking-widest drop-shadow-md">
+      FCRIT VASHI
+    </motion.p>
+    
+    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="text-red-500 font-tech mb-6 text-sm uppercase tracking-[0.5em]">
+      Presents
+    </motion.p>
+    
+    <motion.h1 
+      initial={{ scale: 0.9, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1, textShadow: "0 0 30px rgba(229,9,20,0.5)" }}
+      transition={{ duration: 1.5, ease: "circOut" }}
+      className="text-6xl md:text-8xl lg:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-b from-red-500 via-red-600 to-red-900 font-benguiat uppercase tracking-tight leading-none mb-10 stroke-red-600"
+      style={{ WebkitTextStroke: '1px rgba(229,9,20,0.3)' }}
+    >
+      Hackquinox<br/>
+      <span className="text-lg md:text-3xl tracking-[0.3em] block mt-6 text-red-500 font-bold opacity-80">
+        HACK THE UPSIDE DOWN
+      </span>
+    </motion.h1>
 
-            {/* --- POWERED BY UNSTOP (Upscaled) --- */}
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.8, duration: 1 }}
-            className="flex flex-col items-center gap-3 mb-12 relative z-20"
-          >
-              <span className="text-red-500/60 font-tech text-xs tracking-[0.4em] uppercase">
-                  Powered By
-              </span>
-              
-              <a 
-                href="https://unstop.com" 
-                target="_blank" 
-                rel="noreferrer"
-                className="group relative hover:scale-105 transition-transform duration-300"
-              >
-                  {/* Stronger Blue Glow on Hover */}
-                  <div className="absolute inset-0 bg-blue-500/40 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  
-                  {/* Unstop Logo (Bigger) */}
-                  <img 
-                    src="Unstop.png" 
-                    alt="Unstop" 
-                    // Changed size from h-6/h-8 to h-10/h-14
-                    className="h-10 md:h-14 w-auto object-contain opacity-80 group-hover:opacity-100 transition-opacity"
-                  />
-              </a>
-          </motion.div>
+    {/* --- POWERED BY UNSTOP --- */}
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 1.8, duration: 1 }}
+      className="flex flex-col items-center gap-3 mb-12 relative z-20"
+    >
+      <span className="text-red-500/60 font-tech text-xs tracking-[0.4em] uppercase">
+          Powered By
+      </span>
+      <a 
+        href="https://unstop.com" 
+        target="_blank" 
+        rel="noreferrer"
+        className="group relative hover:scale-105 transition-transform duration-300"
+      >
+          <div className="absolute inset-0 bg-blue-500/40 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <img 
+            src="Unstop.png" 
+            alt="Unstop" 
+            className="h-10 md:h-14 w-auto object-contain opacity-80 group-hover:opacity-100 transition-opacity"
+          />
+      </a>
+    </motion.div>
+  </motion.div>
 
-           {/* --- ANIMATED BUTTON (Disappears on Click) --- */}
-          <div className="absolute bottom-32 left-0 right-0 flex justify-center z-50">
-            <AnimatePresence>
-                {isButtonVisible && (
-                   <motion.button 
-                    key="start-btn"
-                    onClick={handleEnter}
-                    
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    
-                    // EXIT: Blur and Scale Out
-                    exit={{ 
-                        opacity: 0, 
-                        scale: 1.5, 
-                        filter: "blur(20px)", 
-                        transition: { duration: 0.8, ease: "easeOut" } 
-                    }}
-
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    
-                    className="group relative px-10 py-5 bg-transparent overflow-hidden rounded-full cursor-pointer"
-                  >
-                    <div className="absolute inset-0 w-full h-full bg-red-600/10 border border-red-600/50 group-hover:bg-red-600/20 transition-all duration-300 transform skew-x-12" />
-                    <div className="relative flex items-center gap-3 text-red-500 font-bold tracking-[0.2em] font-tech uppercase group-hover:text-red-400">
-                      <Play size={18} className="fill-current" />
-                      Enter The Event
-                    </div>
-                  </motion.button>
-                )}
-            </AnimatePresence>
-          </div>
-          </motion.div>
+  {/* --- THE BUTTON (Placed OUTSIDE the scaling div to prevent shifting) --- */}
+  <div className="relative z-30 mt-4">
+    <AnimatePresence>
+      {isButtonVisible && (
+        <motion.button 
+          key="start-btn"
+          onClick={handleEnter}
           
-          <motion.div animate={{ y: [0, 10, 0] }} transition={{ repeat: Infinity, duration: 2 }} className="absolute bottom-10 left-1/2 -translate-x-1/2 text-red-500/50">
-            <ChevronDown size={56} />
-          </motion.div>
-        </section>
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          
+          // Disappears only when clicked
+          exit={{ 
+              opacity: 0, 
+              scale: 1.5, 
+              filter: "blur(20px)", 
+              transition: { duration: 0.8, ease: "easeOut" } 
+          }}
+
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          
+          className="group relative px-10 py-5 bg-transparent overflow-hidden rounded-full cursor-pointer"
+        >
+          <div className="absolute inset-0 w-full h-full bg-red-600/10 border border-red-600/50 group-hover:bg-red-600/20 transition-all duration-300 transform skew-x-12" />
+          <div className="relative flex items-center gap-3 text-red-500 font-bold tracking-[0.2em] font-tech uppercase group-hover:text-red-400">
+            <Play size={18} className="fill-current" />
+            Enter The Event
+          </div>
+        </motion.button>
+      )}
+    </AnimatePresence>
+  </div>
+  
+  {/* --- SCROLL INDICATOR --- */}
+  <motion.div 
+    style={{ opacity: heroOpacity }}
+    animate={{ y: [0, 10, 0] }} 
+    transition={{ repeat: Infinity, duration: 2 }} 
+    className="absolute bottom-10 left-1/2 -translate-x-1/2 text-red-500/50"
+  >
+    <ChevronDown size={56} />
+  </motion.div>
+</section>
 
         {audioEnabled && <AboutSection />}
         

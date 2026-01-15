@@ -954,152 +954,156 @@ const TrackCard = ({ image, title, domain, ps1, ps2, position, onClick }: any) =
     return "hidden";
   };
 
-  return (
+ return (
+  <motion.div
+    animate={getVariant()}
+    variants={variants}
+    transition={{ duration: 0.6, ease: "circOut" }}
+    // Responsive width/height: h-auto on mobile allows the card to grow with the text
+    className={`absolute top-1/2 left-1/2 w-[90vw] md:w-[600px] h-[550px] md:h-[600px] -translate-x-1/2 -translate-y-1/2 rounded-xl cursor-pointer perspective-1000`}
+  >
+    {/* FLIP CONTAINER */}
     <motion.div
-      animate={getVariant()}
-      variants={variants}
-      transition={{ duration: 0.6, ease: "circOut" }}
-      // --- RESTORED ORIGINAL WIDTH & HEIGHT HERE ---
-      className={`absolute top-1/2 left-1/2 w-[340px] md:w-[600px] h-[450px] md:h-[500px] -translate-x-1/2 -translate-y-1/2 rounded-xl cursor-pointer perspective-1000`}
+      initial={false}
+      animate={{ rotateY: isFlipped ? 180 : 0 }}
+      transition={{ duration: 0.6 }} // Fixed: removed invalid animationDirection
+      className="w-full h-full relative"
+      style={{ transformStyle: "preserve-3d" }}
+      onClick={(e) => {
+        if (isActive) {
+          // @ts-ignore
+          if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'A') {
+            setIsFlipped(!isFlipped);
+          }
+        } else {
+          onClick();
+        }
+      }}
     >
-      {/* FLIP CONTAINER */}
-      <motion.div
-        initial={false}
-        animate={{ rotateY: isFlipped ? 180 : 0 }}
-        //transition={{ duration: 0.6, animationDirection: "normal" }}
-        className="w-full h-full relative"
-        style={{ transformStyle: "preserve-3d" }}
-        onClick={(e) => {
-             if(isActive) {
-                 // @ts-ignore
-                 if(e.target.tagName !== 'BUTTON') setIsFlipped(!isFlipped);
-             } else {
-                 onClick(); 
-             }
+      {/* === FRONT FACE === */}
+      <div
+        className="absolute inset-0 w-full h-full rounded-xl overflow-hidden border-2 border-gray-800 bg-black"
+        style={{ backfaceVisibility: 'hidden' }}
+      >
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: `url(${image})`,
+            filter: isActive ? 'grayscale(0%) contrast(1.1)' : 'grayscale(100%) contrast(1.5) brightness(0.5)'
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+
+        {isActive && !isFlipped && (
+          <div className="absolute top-0 left-0 w-full h-1 bg-red-500/50 shadow-[0_0_15px_red] animate-[scanline_3s_linear_infinite]" />
+        )}
+
+        <div className="absolute bottom-0 left-0 w-full p-6 md:p-8 flex flex-col gap-2">
+          <div className="bg-red-900/80 text-red-200 text-xs font-tech w-fit px-2 py-1 rounded border border-red-500/50 backdrop-blur-md">
+            {domain}
+          </div>
+          <h3 className="text-3xl md:text-5xl font-black font-benguiat text-white uppercase drop-shadow-lg leading-none">
+            {title}
+          </h3>
+          {isActive && (
+            <div className="mt-4 flex items-center gap-2 text-red-400 font-mono text-xs animate-pulse">
+              <span>CLICK TO DECLASSIFY FILE</span>
+              <ArrowRight size={14} />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* === BACK FACE === */}
+      <div
+        className="absolute inset-0 w-full h-full rounded-xl overflow-hidden border-2 border-red-600 bg-black p-6 md:p-8 flex flex-col"
+        style={{
+          backfaceVisibility: 'hidden',
+          transform: 'rotateY(180deg)',
+          backgroundImage: "url('https://www.transparenttextures.com/patterns/cubes.png')"
         }}
       >
-        {/* === FRONT FACE === */}
-        <div 
-            className="absolute inset-0 w-full h-full backface-hidden rounded-xl overflow-hidden border-2 border-gray-800 bg-black"
-            style={{ backfaceVisibility: 'hidden' }}
-        >
-             <div 
-                className="absolute inset-0 bg-cover bg-center"
-                style={{ 
-                    backgroundImage: `url(${image})`,
-                    filter: isActive ? 'grayscale(0%) contrast(1.1)' : 'grayscale(100%) contrast(1.5) brightness(0.5)'
-                }}
-             />
-             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
-             
-             {isActive && !isFlipped && (
-                 <div className="absolute top-0 left-0 w-full h-1 bg-red-500/50 shadow-[0_0_15px_red] animate-[scanline_3s_linear_infinite]" />
-             )}
+        <div className="absolute inset-0 bg-red-900/10 pointer-events-none" />
 
-             <div className="absolute bottom-0 left-0 w-full p-8 flex flex-col gap-2">
-                 <div className="bg-red-900/80 text-red-200 text-xs font-tech w-fit px-2 py-1 rounded border border-red-500/50 backdrop-blur-md">
-                    {domain}
-                 </div>
-                 <h3 className="text-4xl md:text-5xl font-black font-benguiat text-white uppercase drop-shadow-lg leading-none">
-                    {title}
-                 </h3>
-                 {isActive && (
-                    <div className="mt-4 flex items-center gap-2 text-red-400 font-mono text-xs animate-pulse">
-                        <span>CLICK TO DECLASSIFY FILE</span>
-                        <ArrowRight size={14} />
-                    </div>
-                 )}
-             </div>
+        {/* HEADER */}
+        <div className="flex justify-between items-center border-b border-red-800 pb-3 mb-4 z-10 shrink-0">
+          <span className="text-red-500 font-tech tracking-[0.3em] text-[10px] md:text-xs uppercase">TOP SECRET // {domain}</span>
+          <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_10px_red]" />
         </div>
 
-        {/* === BACK FACE === */}
-        <div 
-            className="absolute inset-0 w-full h-full backface-hidden rounded-xl overflow-hidden border-2 border-red-600 bg-black p-8 flex flex-col"
-            style={{ 
-                backfaceVisibility: 'hidden', 
-                transform: 'rotateY(180deg)',
-                backgroundImage: "url('https://www.transparenttextures.com/patterns/cubes.png')"
-            }}
-        >
-            <div className="absolute inset-0 bg-red-900/10 pointer-events-none" />
-            
-            <div className="flex justify-between items-center border-b border-red-800 pb-4 mb-4 z-10">
-                <span className="text-red-500 font-tech tracking-[0.3em] text-xs uppercase">TOP SECRET // {domain}</span>
-                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_10px_red]" />
+        {/* SCROLLABLE CONTENT AREA */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar relative z-10 pr-2 space-y-4">
+          <h3 className="text-xl md:text-2xl font-benguiat text-white uppercase">{title}</h3>
+
+          {/* PS TOGGLE SWITCH */}
+          {!isOpenInnovation && (
+            <div className="flex w-full border border-red-900 rounded overflow-hidden shrink-0">
+              <button
+                onClick={() => setShowPs2(false)}
+                className={`flex-1 py-2 text-[10px] font-bold tracking-widest uppercase transition-all ${!showPs2 ? 'bg-red-600 text-white' : 'bg-black text-red-500 hover:bg-red-900/20'}`}
+              >
+                Objective 1
+              </button>
+              <div className="w-px bg-red-900" />
+              <button
+                onClick={() => setShowPs2(true)}
+                className={`flex-1 py-2 text-[10px] font-bold tracking-widest uppercase transition-all ${showPs2 ? 'bg-red-600 text-white' : 'bg-black text-red-500 hover:bg-red-900/20'}`}
+              >
+                Objective 2
+              </button>
             </div>
+          )}
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar relative z-10 pr-2">
-                 <h3 className="text-2xl font-benguiat text-white mb-6 uppercase">{title}</h3>
+          {/* MAIN DESCRIPTION BOX */}
+          <div className="bg-black/50 border border-red-900/50 p-4 md:p-6 rounded text-gray-300 font-mono text-xs md:text-sm leading-relaxed">
+            {isOpenInnovation ? (
+              <div className="text-center py-4">
+                <p className="text-red-400 font-bold tracking-widest mb-2">PROTOCOL: UNRESTRICTED</p>
+                <p className="opacity-70 italic text-[10px]">Identifying constraints... NONE FOUND.</p>
+                <p className="mt-4 text-white uppercase font-bold">Innovate without boundaries.</p>
+              </div>
+            ) : (
+              <motion.div
+                key={showPs2 ? 'ps2' : 'ps1'}
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <span className="text-red-500 font-bold block mb-2 text-[10px] tracking-widest uppercase">
+                  {showPs2 ? ">> Secondary Objective:" : ">> Primary Objective:"}
+                </span>
+                {showPs2 ? ps2 : ps1}
+              </motion.div>
+            )}
 
-                 {!isOpenInnovation && (
-                    <div className="flex w-full mb-6 border border-red-900 rounded overflow-hidden">
-                        <button 
-                           onClick={() => setShowPs2(false)}
-                           className={`flex-1 py-3 text-xs font-bold tracking-widest uppercase transition-all ${!showPs2 ? 'bg-red-600 text-white' : 'bg-black text-red-500 hover:bg-red-900/20'}`}
-                        >
-                           Problem Statement 1
-                        </button>
-                        <div className="w-px bg-red-900" />
-                        <button 
-                           onClick={() => setShowPs2(true)}
-                           className={`flex-1 py-3 text-xs font-bold tracking-widest uppercase transition-all ${showPs2 ? 'bg-red-600 text-white' : 'bg-black text-red-500 hover:bg-red-900/20'}`}
-                        >
-                           Problem Statement 2
-                        </button>
-                    </div>
-                 )}
-
-                 <div className="bg-black/50 border border-red-900/50 p-6 rounded text-gray-300 font-mono text-sm md:text-base leading-relaxed">
-                     {isOpenInnovation ? (
-                        <div className="text-center py-8">
-                            
-                            <p className="text-red-400 font-bold tracking-widest mb-4">PROTOCOL: UNRESTRICTED</p>
-                            <p>Identifying constraints... NONE FOUND.</p>
-                            <p className="mt-4 text-white">Innovate without boundaries.</p>
-                        </div>
-                     ) : (
-                        <motion.div
-                           key={showPs2 ? 'ps2' : 'ps1'}
-                           initial={{ opacity: 0, x: 10 }}
-                           animate={{ opacity: 1, x: 0 }}
-                           transition={{ duration: 0.3 }}
-                        >
-                            <span className="text-red-500 font-bold block mb-2 text-xs tracking-widest">
-                                {showPs2 ? ">> SECONDARY OBJECTIVE:" : ">> PRIMARY OBJECTIVE:"}
-                            </span>
-                            {showPs2 ? ps2 : ps1}
-                        </motion.div>
-                     )}
-                 </div>
-                 <p className="text-gray-300 font-tech text-sm leading-relaxed">
-  {domain.abstract} {/* Your existing abstract text */}
-  
-  <span className="block mt-4 text-red-500/80 border-t border-red-900/30 pt-3 italic">
-    [!] SYSTEM NOTE: Data truncated. Decrypt full mission brief and 
-    technical specs at the 
-    <a 
-      href="https://unstop.com/o/21U5F3u?lb=xQWvaErs&utm_medium=Share&utm_source=floydcar21615&utm_campaign=Online_coding_challenge" 
-      target="_blank" 
-      className="ml-1 underline decoration-red-600 underline-offset-4 hover:text-red-400"
-    >
-      UNSTOP TERMINAL &gt;_
-    </a>
-  </span>
-</p>
+            {/* INTEGRATED SYSTEM NOTE AND LINK */}
+            <div className="mt-6 pt-4 border-t border-red-900/30">
+              <p className="text-red-500/80 font-tech text-[10px] md:text-xs leading-relaxed italic">
+                [!] SYSTEM NOTE: DATA TRUNCATED. DECRYPT FULL MISSION BRIEF AND TECHNICAL SPECS AT THE 
+                <a
+                  href="https://unstop.com/o/21U5F3u?lb=xQWvaErs&utm_medium=Share&utm_source=floydcar21615&utm_campaign=Online_coding_challenge"
+                  target="_blank"
+                  rel="noreferrer"
+                 className="ml-1 underline decoration-red-600 underline-offset-4 hover:text-red-400"
+                >
+                  UNSTOP TERMINAL &gt;
+                </a>
+              </p>
             </div>
-            
-
-            <button 
-                onClick={() => setIsFlipped(false)}
-                className="mt-4 w-full py-3 border border-red-800 text-red-500 hover:bg-red-900/20 hover:text-white transition-colors font-tech uppercase tracking-widest text-xs z-10"
-            >
-                [ CLOSE FILE ]
-            </button>
+          </div>
         </div>
 
-      </motion.div>
+        {/* CLOSE BUTTON */}
+        <button
+          onClick={() => setIsFlipped(false)}
+          className="mt-4 w-full py-3 border border-red-800 text-red-500 hover:bg-red-600 hover:text-white transition-all font-tech uppercase tracking-widest text-[10px] z-10 shrink-0"
+        >
+          [ CLOSE FILE ]
+        </button>
+      </div>
     </motion.div>
-  );
+  </motion.div>
+);
 };
 
 // --- 3. DOMAIN CAROUSEL (Unchanged Logic, just passes new props) ---

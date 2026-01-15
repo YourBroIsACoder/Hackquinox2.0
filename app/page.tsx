@@ -1320,14 +1320,15 @@ const PrizeCard = ({ rank, title, prize, color, scale = 1, className = '' }: any
        <div className="w-full mt-10">
   <ul className="space-y-4 font-mono text-sm text-gray-400">
     {/* Select the array based on rank, or fallback to an empty array */}
-    {(PRIZES[rank] || []).map((perk, index) => (
-      <PerkItem 
-        key={index}
-        icon={perk.icon} 
-        text={perk.text} 
-        delay={perk.delay} 
-      />
-    ))}
+   {/* Select the array based on rank, or fallback to an empty array */}
+{(PRIZES[rank as 1 | 2 | 3] || []).map((perk: any, index: number) => (
+  <PerkItem 
+    key={index}
+    icon={perk.icon} 
+    text={perk.text}
+    delay={perk.delay}
+  />
+))}
   </ul>
 </div>
       </div>

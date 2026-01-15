@@ -6,8 +6,8 @@ import {
   Terminal, Code2, Cpu, Globe, Users, Zap, 
   Layers, Ghost, Radio, ChevronDown, Github, Linkedin, Instagram,
   Play, X, Wifi, ShieldAlert, Database, Lock,
-  Calendar, Clock, Trophy, Gift, Star, Ticket, ArrowRight, ArrowLeft, Briefcase,
-  Volume2, VolumeX
+  Calendar, Clock, Trophy, Gift, Star, Ticket, ArrowRight, ArrowLeft, Briefcase,MoreHorizontal,PlusCircle,
+  Volume2, VolumeX,Award,Medal
 } from 'lucide-react';
 import { MapPin, Navigation as NavigationIcon } from 'lucide-react';
 
@@ -1203,6 +1203,21 @@ const TimelineItem: React.FC<TimelineItemProps> = ({ time, title, desc, align })
 );
 
 const PrizeCard = ({ rank, title, prize, color, scale = 1, className = '' }: any) => {
+  const PRIZES = {
+  1: [
+    { icon: Trophy, text: "Certificate of Valor", delay: 0.1 },
+    { icon: Star, text: "Exclusive Swag Kit", delay: 0.2 },
+    { icon: Gift, text: "Event T-SHIRT", delay: 0.3 },
+  ],
+  2: [
+  { icon: Trophy, text: "Certificate of Valor", delay: 0.1 },
+    { icon: Star, text: "Exclusive Swag Kit", delay: 0.2 },
+  ],
+  3: [
+      { icon: Trophy, text: "Certificate of Valor", delay: 0.1 },
+    { icon: Star, text: "Exclusive Swag Kit", delay: 0.2 },
+  ],
+};
 
   // Define colors based on rank
   const isGold = color === 'yellow';
@@ -1300,15 +1315,21 @@ const PrizeCard = ({ rank, title, prize, color, scale = 1, className = '' }: any
                 </div>
             </div>
         </div>
+        
 
-        {/* Data/Perks List */}
-        <div className="w-full mt-10">
-          <ul className="space-y-4 font-mono text-sm text-gray-400">
-            <PerkItem icon={Star} text="Certificate of Valor" delay={0.1} />
-            <PerkItem icon={Gift} text="Exclusive Swag Kit" delay={0.2} />
-            <PerkItem icon={Briefcase} text="Interview Fast-Track" delay={0.3} />
-          </ul>
-        </div>
+       <div className="w-full mt-10">
+  <ul className="space-y-4 font-mono text-sm text-gray-400">
+    {/* Select the array based on rank, or fallback to an empty array */}
+    {(PRIZES[rank] || []).map((perk, index) => (
+      <PerkItem 
+        key={index}
+        icon={perk.icon} 
+        text={perk.text} 
+        delay={perk.delay} 
+      />
+    ))}
+  </ul>
+</div>
       </div>
     </motion.div>
   );
@@ -1939,7 +1960,7 @@ const [isButtonVisible, setIsButtonVisible] = useState(true);
                     align="left" 
                 />
                 <TimelineItem 
-                    time="27TH JAN" 
+                    time="25TH JAN" 
                     title="Gate Seals" 
                     desc="Registration Closes. No new entries allowed." 
                     align="right" 
@@ -2014,10 +2035,15 @@ const [isButtonVisible, setIsButtonVisible] = useState(true);
            <div className="bg-gradient-to-r from-red-900/10 via-red-900/30 to-red-900/10 border-y border-red-900/50 p-12 text-center w-full mx-auto rounded-3xl backdrop-blur-sm relative z-10 max-w-6xl">
               <h3 className="text-3xl font-benguiat text-white mb-8">Participant Goodies</h3>
               <div className="flex flex-wrap justify-center gap-12 text-gray-300 font-tech text-lg tracking-widest uppercase">
-                 <div className="flex items-center gap-3"><Ticket className="text-red-500" /> Event T-Shirt</div>
+                 
                  <div className="flex items-center gap-3"><Star className="text-red-500" /> Sticker Pack</div>
-                 <div className="flex items-center gap-3"><Gift className="text-red-500" /> Digital Certificate</div>
-                 <div className="flex items-center gap-3"><Zap className="text-red-500" /> Hosting Credits</div>
+  <div className="flex items-center gap-3"><Gift className="text-red-500" /> Digital Certificate</div>
+  <div className="flex items-center gap-3"><Zap className="text-red-500" /> Hosting Credits</div>
+  <div className="flex items-center gap-3"><Ticket className="text-red-500" /> Snacks</div>
+  {/* The "Much More" item */}
+  <div className="flex items-center gap-3 font-medium">
+  <PlusCircle className="text-red-500" /> & many more!
+</div>
               </div>
            </div>
         </section>

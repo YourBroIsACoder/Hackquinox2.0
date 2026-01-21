@@ -896,7 +896,7 @@ const tracks = [
   }, 
   { 
     title: "Accessibility & Assistive Tech", 
-    domain: "Project Sightglass",
+    domain: "Cerebro Interface",
     desc: "Clear the static. Build neural-bridge technologies that filter cognitive noise and translate complex dimensions for those with neurodiverse processing.", 
     // Image: A high-tech terminal in the Upside Down with a glowing red cursor/interface
     image: "lab.jpg", 
@@ -913,6 +913,7 @@ const tracks = [
     
   }, 
 ];
+
 // --- UPGRADED "RIFT" CARD ---
 // --- FIXED FLIP CARD (Original Width Restored) ---
 const TrackCard = ({ image, title, domain, ps1, ps2, position, onClick }: any) => {
@@ -1961,7 +1962,7 @@ const [isButtonVisible, setIsButtonVisible] = useState(true);
                     align="left" 
                 />
                 <TimelineItem 
-                    time="25TH JAN" 
+                    time="28TH JAN" 
                     title="Gate Seals" 
                     desc="Registration Closes. No new entries allowed." 
                     align="right" 

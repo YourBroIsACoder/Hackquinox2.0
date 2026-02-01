@@ -42,3 +42,10 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+@keyframes vecnaPulse {
+  0%, 100% { opacity: 0.6; text-shadow: 0 0 6px rgba(220,38,38,0.6); }
+  50% { opacity: 1; text-shadow: 0 0 14px rgba(220,38,38,1); }
+}
+.animate-vecna {
+  animation: vecnaPulse 1.5s infinite ease-in-out;
+}

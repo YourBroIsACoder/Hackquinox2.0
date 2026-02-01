@@ -7,10 +7,11 @@ import {
   Layers, Ghost, Radio, ChevronDown, Github, Linkedin, Instagram,
   Play, X, Wifi, ShieldAlert, Database, Lock,
   Calendar, Clock, Trophy, Gift, Star, Ticket, ArrowRight, ArrowLeft, Briefcase,MoreHorizontal,PlusCircle,
-  Volume2, VolumeX,Award,Medal
+  Volume2, VolumeX,Award,Medal,Plus,Trash2,Upload,CheckCircle
 } from 'lucide-react';
 import { MapPin, Navigation as NavigationIcon } from 'lucide-react';
-
+import { signInWithEmailAndPassword } from "firebase/auth"; // NEW
+import { auth } from "./firebase"; // NEW: Adjust this path to your firebase config file
 
 
 // --- TYPES ---
@@ -522,84 +523,110 @@ const BackgroundScene = () => {
 
 // --- TERMINAL MODAL (With Google Sheets Integration) ---
 // --- TERMINAL MODAL (Build-Safe Version) ---
-const TerminalModal = ({ isOpen, onClose }: any) => {
-  // CONFIGURATION
-  const ROUND_2_UNLOCKED = false; // Set to TRUE to test the form
-  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby3uVVC5wqvl9b5aUcVYJJLdb7d14YhqMKVlfE3EMnA5fjmEk_XCgnwDMnTuGmoxmVL/exec";
 
-  // STATE
-  const [text, setText] = useState('');
-  const [stage, setStage] = useState(0); 
-  const [teamName, setTeamName] = useState('');
-  const [isBreach, setIsBreach] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false); // Loading State
+
+
+
+
+
+
+
+
+const TerminalModal = ({ isOpen, onClose }: any) => {
+  // --- CONFIGURATION ---
+  const ROUND_2_UNLOCKED = true;
+  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyQ17SW0fF64RAh6I_TIqjbDVR-fBCkP-q8GkbWyZ1EJvM0JxA6Zz1GEFtLrl3Ezz-h/exec";
   
-  // REFS
+  // IMAGES
+  const vecnaImageUrl = "https://upload.wikimedia.org/wikipedia/en/thumb/d/df/Vecna_%28Stranger_Things%29.jpg/250px-Vecna_%28Stranger_Things%29.jpg";
+  const terminalBgUrl = "https://i.pinimg.com/736x/dd/f9/32/ddf932385822e1753776a977f8cc7b5a.jpg";
+
+  // AUDIO FILES
+  const CHIME_AUDIO_FILE = '/chime2.mp3';
+  const LOOP_AUDIO_FILE = '/chime3.mp3';
+
+  // --- STATE ---
+  // AUTH STATES
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [authError, setAuthError] = useState('');
+
+  // TERMINAL STATES
+  const [text, setText] = useState('');
+  const [stage, setStage] = useState(-1); // Starts at -1 for Auth Gate
+  const [teamName, setTeamName] = useState('');
+  const [imageBlob, setImageBlob] = useState<string | null>(null); // NEW: Image State
+  const [isBreach, setIsBreach] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // --- REFS ---
   const typingAudioRef = useRef<HTMLAudioElement | null>(null);
   const lockInAudioRef = useRef<HTMLAudioElement | null>(null);
   const statusAudioRef = useRef<HTMLAudioElement | null>(null);
+  const breachLoopAudioRef = useRef<HTMLAudioElement | null>(null); 
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const [members, setMembers] = useState([
-    { name: '', phone: '', email: '' },
     { name: '', phone: '', email: '' },
     { name: '', phone: '', email: '' },
     { name: '', phone: '', email: '' }
   ]);
 
   const fullText = "> CONNECTING TO FCRIT_SERVER_NODE_1...\n> VERIFYING PARTICIPANT ID...\n> ACCESS GRANTED.\n\nWELCOME TO HACKQUINOX - HACK THE UPSIDE DOWN\nINITIALIZE TEAM PROTOCOLS:";
-  const vecnaImageUrl = "https://upload.wikimedia.org/wikipedia/en/thumb/d/df/Vecna_%28Stranger_Things%29.jpg/250px-Vecna_%28Stranger_Things%29.jpg";
 
-  // --- FIX: INJECT STYLES SAFELY HERE ---
+  // --- EFFECTS ---
+
   useEffect(() => {
-    // This runs ONLY in the browser, so 'document' is safe to use
     if (!document.getElementById('terminal-drip-style')) {
-        const style = document.createElement('style');
-        style.id = 'terminal-drip-style';
-        style.textContent = `
-          @keyframes drip {
-            0% { height: 0; opacity: 0; }
-            10% { height: 20%; opacity: 1; }
-            100% { height: 100%; opacity: 0.6; }
-          }
-          .animate-drip { animation: drip 2s infinite ease-in; }
-          .animate-scanline { animation: scanline 3s linear infinite; }
-          @keyframes scanline {
-            0% { top: 0%; }
-            100% { top: 100%; }
-          }
-        `;
-        document.head.appendChild(style);
+      const style = document.createElement('style');
+      style.id = 'terminal-drip-style';
+      style.textContent = `
+        @keyframes drip { 0% { height: 0; opacity: 0; } 10% { height: 20%; opacity: 1; } 100% { height: 100%; opacity: 0.6; } }
+        .animate-drip { animation: drip 2s infinite ease-in; }
+        .animate-scanline { animation: scanline 3s linear infinite; }
+        @keyframes scanline { 0% { top: 0%; } 100% { top: 100%; } }
+        .glitch-overlay { background: url('${vecnaImageUrl}'); background-size: cover; background-position: center; mix-blend-mode: overlay; }
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #1a0505; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #7f1d1d; border-radius: 4px; }
+      `;
+      document.head.appendChild(style);
     }
   }, []);
 
-  const scrollToBottom = () => {
-    if(bottomRef.current) bottomRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
-  };
-
+  // Initialize Audio Objects
   useEffect(() => {
-    if (ROUND_2_UNLOCKED) {
+    if (ROUND_2_UNLOCKED && isOpen) {
         if (!typingAudioRef.current) {
-            typingAudioRef.current = new Audio('/keyboard.mp3'); 
+            typingAudioRef.current = new Audio('/keyboard.mp3');
             typingAudioRef.current.loop = true;
-            typingAudioRef.current.volume = 0.6; 
+            typingAudioRef.current.volume = 0.6;
         }
         if (!lockInAudioRef.current) {
-            lockInAudioRef.current = new Audio('/lock-in.mp3'); 
+            lockInAudioRef.current = new Audio('/lock-in.mp3');
             lockInAudioRef.current.volume = 1.0;
         }
         if (!statusAudioRef.current) {
-            statusAudioRef.current = new Audio('/bg.mp3'); 
-            statusAudioRef.current.volume = 0.6; 
+            statusAudioRef.current = new Audio('/bg.mp3');
+            statusAudioRef.current.volume = 0.6;
+        }
+        if (!breachLoopAudioRef.current) {
+            breachLoopAudioRef.current = new Audio(LOOP_AUDIO_FILE); 
+            breachLoopAudioRef.current.loop = true;
+            breachLoopAudioRef.current.volume = 1.0;
         }
     }
-  }, [ROUND_2_UNLOCKED]);
+  }, [ROUND_2_UNLOCKED, isOpen]);
 
+  // Typing & Music Fade Logic
   useEffect(() => {
     if (!ROUND_2_UNLOCKED) return;
 
+    // Only run typing sequence if Stage is 0 (Auth passed)
     if (isOpen && stage === 0) {
-      if (typeof bgMusic !== 'undefined') bgMusic.fadeVolume(0.1, 0.5); 
+      // @ts-ignore
+      if (typeof bgMusic !== 'undefined') bgMusic.fadeVolume(0.1, 0.5);
+      
       if (typingAudioRef.current) {
           typingAudioRef.current.currentTime = 0;
           typingAudioRef.current.play().catch(() => {});
@@ -607,72 +634,153 @@ const TerminalModal = ({ isOpen, onClose }: any) => {
 
       let currentText = '';
       let currentIndex = 0;
-      
       const interval = setInterval(() => {
         if (currentIndex < fullText.length) {
           currentText += fullText[currentIndex];
           setText(currentText);
-          scrollToBottom();
           currentIndex++;
+          scrollToBottom();
         } else {
           clearInterval(interval);
           setStage(1);
-          scrollToBottom();
           if (typingAudioRef.current) typingAudioRef.current.pause();
-          if (typeof bgMusic !== 'undefined') bgMusic.fadeVolume(0.4, 2.0); 
+          // @ts-ignore
+          if (typeof bgMusic !== 'undefined') bgMusic.fadeVolume(0.4, 2.0);
         }
-      }, 30); 
-
+      }, 30);
       return () => {
         clearInterval(interval);
         if (typingAudioRef.current) typingAudioRef.current.pause();
       };
     } 
     
-    // STAGE 2: READY SEQUENCE
     else if (isOpen && stage === 2) {
-        const staggerDelay = 800; 
-        const initialDelay = 500; 
-        const vecnaAppearanceTime = initialDelay + (4 * staggerDelay) + 500; 
-
-        const timers = members.map((_, index) => {
-            return setTimeout(() => {
-                if (statusAudioRef.current) {
-                    statusAudioRef.current.currentTime = 0; 
-                    statusAudioRef.current.play().catch(() => {});
-                }
-                scrollToBottom(); 
-            }, initialDelay + (index * staggerDelay));
-        });
-
-        const vecnaTimer = setTimeout(() => {
-            setIsBreach(true); 
+      const staggerDelay = 800;
+      const initialDelay = 500;
+      
+      const timers = members.map((_, index) => {
+        return setTimeout(() => {
             if (statusAudioRef.current) {
-                statusAudioRef.current.pause(); 
                 statusAudioRef.current.currentTime = 0;
+                statusAudioRef.current.play().catch(() => {});
             }
-            setTimeout(() => scrollToBottom(), 100);
-        }, vecnaAppearanceTime);
+            scrollToBottom();
+        }, initialDelay + (index * staggerDelay));
+      });
 
-        return () => {
-            timers.forEach(t => clearTimeout(t));
-            clearTimeout(vecnaTimer);
-            setIsBreach(false);
-        };
+      const vecnaAppearanceTime = initialDelay + (members.length * staggerDelay) + 500;
+
+      const vecnaTimer = setTimeout(() => {
+        setIsBreach(true);
+        if (statusAudioRef.current) {
+            statusAudioRef.current.pause();
+            statusAudioRef.current.currentTime = 0;
+        }
+      }, vecnaAppearanceTime);
+
+      return () => {
+        timers.forEach(t => clearTimeout(t));
+        clearTimeout(vecnaTimer);
+        setIsBreach(false);
+      };
+    }
+  }, [isOpen, stage, members.length]);
+
+  // --- VECNA AUDIO SEQUENCE ---
+  useEffect(() => {
+    let loopTimer: NodeJS.Timeout;
+
+    if (isBreach) {
+      const playClockChime = () => {
+        const chime = new Audio(CHIME_AUDIO_FILE); 
+        chime.volume = 1.0; 
+        chime.play().catch(e => console.log("Chime error", e));
+      };
+      playClockChime();
+
+      loopTimer = setTimeout(() => {
+        if (breachLoopAudioRef.current) {
+            breachLoopAudioRef.current.currentTime = 0;
+            breachLoopAudioRef.current.volume = 1.0; 
+            breachLoopAudioRef.current.play().catch(e => console.log("Loop error", e));
+        }
+      }, 2000); 
+      
+      if ('vibrate' in navigator) {
+        navigator.vibrate([100, 50, 100, 50, 300]);
+      }
+    } else {
+        if (breachLoopAudioRef.current) {
+            breachLoopAudioRef.current.pause();
+            breachLoopAudioRef.current.currentTime = 0;
+        }
     }
 
-    else if (!isOpen) {
-      setText('');
-      setStage(0);
-      setTeamName('');
-      setMembers(Array(4).fill({ name: '', phone: '', email: '' }));
-      setIsBreach(false);
+    return () => {
+        clearTimeout(loopTimer);
+        if (breachLoopAudioRef.current) {
+            breachLoopAudioRef.current.pause();
+            breachLoopAudioRef.current.currentTime = 0;
+        }
+    };
+  }, [isBreach]);
+
+  // --- HANDLERS ---
+  
+  // Login Handler
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setAuthError("");
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      setStage(0); // Proceed to Terminal Initialization
+    } catch (error: any) {
+      setAuthError("INVALID CREDENTIALS. ACCESS DENIED.");
+    } finally {
       setIsSubmitting(false);
-      if (typeof bgMusic !== 'undefined') bgMusic.fadeVolume(0.4, 1.0);
-      if (typingAudioRef.current) typingAudioRef.current.pause();
-      if (statusAudioRef.current) statusAudioRef.current.pause();
     }
-  }, [isOpen, stage, ROUND_2_UNLOCKED]);
+  };
+
+  // NEW: Image Handler
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      console.log("File selected:", file.name, "Size:", file.size, "bytes");
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        console.log("FileReader result length:", result.length);
+        console.log("FileReader result preview:", result.substring(0, 100));
+        // Store both the image data and filename
+        setImageBlob(JSON.stringify({
+          data: result,
+          filename: file.name
+        }));
+      };
+      reader.onerror = (error) => {
+        console.error("FileReader error:", error);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const scrollToBottom = () => {
+    if (bottomRef.current) bottomRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+  };
+
+  const addMember = () => {
+    if (members.length < 4) {
+      setMembers([...members, { name: '', phone: '', email: '' }]);
+    }
+  };
+
+  const removeMember = (index: number) => {
+    if (members.length > 3) {
+      setMembers(members.filter((_, i) => i !== index));
+    }
+  };
 
   const handleMemberChange = (index: number, field: string, value: string) => {
     const newMembers = [...members];
@@ -683,26 +791,52 @@ const TerminalModal = ({ isOpen, onClose }: any) => {
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
+    
+    // NEW: Validate image upload
+    if (!imageBlob) {
+      alert("PLEASE UPLOAD PAYMENT PROOF TO PROCEED.");
+      return;
+    }
+    
+    // DEBUG: Log what we're sending
+    console.log("=== SUBMISSION DEBUG ===");
+    console.log("Team Name:", teamName);
+    console.log("Members:", members.length);
+    console.log("ImageBlob exists:", !!imageBlob);
+    console.log("ImageBlob length:", imageBlob ? imageBlob.length : 0);
+    console.log("ImageBlob preview:", imageBlob ? imageBlob.substring(0, 100) : "none");
+    
+    const payload = { 
+      teamName, 
+      imageBlob,
+      members 
+    };
+    
+    console.log("Payload size:", JSON.stringify(payload).length, "bytes");
+    
     setIsSubmitting(true);
-
     try {
-        await fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ teamName, members })
-        });
-
-        if (lockInAudioRef.current) {
-            lockInAudioRef.current.currentTime = 0;
-            lockInAudioRef.current.play();
-        }
-        setStage(2);
+      const response = await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
+      console.log("Response received:", response);
+      console.log("Response status:", response.status);
+      
+      if (lockInAudioRef.current) {
+        lockInAudioRef.current.currentTime = 0;
+        lockInAudioRef.current.play().catch(() => {});
+      }
+      
+      setStage(2);
     } catch (error) {
-        console.error("Transmission Failed", error);
-        alert("Transmission Failed. Check your internet connection.");
+      console.error("Submission error:", error);
+      alert("Transmission Failed.");
     } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -712,148 +846,325 @@ const TerminalModal = ({ isOpen, onClose }: any) => {
     <AnimatePresence>
       <motion.div 
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm"
+        className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 backdrop-blur-md overflow-hidden"
       >
-        {!ROUND_2_UNLOCKED ? (
-            <div className="w-full max-w-5xl bg-black border border-red-800 rounded-3xl p-8 font-mono relative overflow-hidden shadow-[0_0_50px_rgba(220,38,38,0.2)] min-h-[500px] flex flex-col">
-              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 pointer-events-none" />
-              {/* Uses the animation injected in useEffect */}
-              <div className="absolute top-0 left-0 w-full h-1 bg-red-600 animate-scanline" />
-              
-              <div className="flex justify-between items-center mb-12 border-b border-red-900 pb-4 z-10">
-                <span className="text-red-500 font-tech tracking-[0.3em] text-xl">FCRIT_GATEWAY // PROTOCOL_SELECT</span>
-                <button onClick={onClose} className="text-red-500 hover:text-white"><X size={24}/></button>
-              </div>
-              <div className="flex flex-col md:flex-row gap-8 items-center justify-center h-full z-10">
-                <motion.div 
-                   whileHover={{ scale: 1.02, borderColor: '#ef4444' }}
-                   className="group relative w-full md:w-1/2 h-80 border border-red-900 bg-red-950/20 rounded-xl p-8 flex flex-col justify-between overflow-hidden cursor-pointer"
-                   onClick={() => window.open('https://unstop.com/o/21U5F3u?lb=xQWvaErs&utm_medium=Share&utm_source=floydcar21615&utm_campaign=Online_coding_challenge', '_blank')}
-                >
-                   <div className="absolute inset-0 bg-red-600/0 group-hover:bg-red-600/10 transition-colors" />
-                   <div>
-                     <div className="flex justify-between items-start mb-4">
-                        <h3 className="text-3xl font-benguiat text-white">ROUND 01</h3>
-                        <div className="px-3 py-1 bg-green-900/50 border border-green-500 text-green-400 text-xs tracking-widest rounded">ACCESS GRANTED</div>
-                     </div>
-                     <p className="text-gray-400 text-sm leading-relaxed">
-                        The Gateway coordinates have shifted to the Unstop Mainframe for the Initial FIGHT.
-                        <br/><span className="text-red-400 mt-2 block"> INITIATE JUMP TO UNSTOP</span>
-                     </p>
-                   </div>
-                   <div className="w-full h-32 bg-black/50 rounded border border-red-900/50 flex items-center justify-center relative overflow-hidden">
-                       <Globe className="text-red-500 w-12 h-12 animate-pulse" />
-                   </div>
-                </motion.div>
-                <motion.div className="relative w-full md:w-1/2 h-80 border border-gray-800 bg-black rounded-xl p-8 flex flex-col justify-between overflow-hidden grayscale opacity-75">
-                   <div className="absolute inset-0 bg-black/60 z-20 flex flex-col items-center justify-center backdrop-blur-[2px]">
-                       <Lock className="text-gray-400 w-16 h-16 mb-4" />
-                       <span className="text-gray-400 font-tech tracking-[0.3em] border border-gray-600 px-4 py-2 rounded">CLASSIFIED // LOCKED</span>
-                   </div>
-                   <div>
-                     <div className="flex justify-between items-start mb-4">
-                        <h3 className="text-3xl font-benguiat text-gray-500">ROUND 02</h3>
-                        <div className="px-3 py-1 bg-gray-900 border border-gray-700 text-gray-500 text-xs tracking-widest rounded">RESTRICTED</div>
-                     </div>
-                     <p className="text-gray-600 text-sm leading-relaxed">The Main Event. Only qualified squads may enter the Upside Down.</p>
-                   </div>
-                   <div className="w-full h-32 bg-gray-900/50 rounded border border-gray-800 flex items-center justify-center">
-                       <Database className="text-gray-700 w-12 h-12" />
-                   </div>
-                </motion.div>
-              </div>
+        
+        {/* --- STAGE -1: THE AUTH GATE --- */}
+        {stage === -1 && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }} 
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-md bg-black border border-red-900 p-8 rounded-2xl shadow-[0_0_50px_rgba(220,38,38,0.2)] z-50 relative"
+          >
+             {/* Simple Close button for Login Stage */}
+            <button onClick={onClose} className="absolute top-4 right-4 text-red-700 hover:text-red-400"><X size={20} /></button>
+
+            <div className="text-center mb-8">
+              <h2 className="text-red-600 font-tech tracking-[0.3em] text-xl uppercase">Security Clearance Required</h2>
+              <p className="text-gray-500 text-xs mt-2 uppercase">Enter the credentials sent to your terminal</p>
             </div>
-        ) : (
-        <motion.div 
-            animate={isBreach ? { x: [-10, 10, -10, 10, 0], borderColor: ["#991b1b", "#ef4444", "#991b1b"] } : {}}
-            transition={{ duration: 0.4 }}
-            className={`w-full max-w-6xl bg-black border ${isBreach ? 'border-red-500 shadow-[0_0_100px_red]' : 'border-red-800 shadow-[0_0_80px_rgba(229,9,20,0.3)]'} rounded-3xl p-6 font-mono relative overflow-hidden h-[90vh] flex flex-col transition-all duration-300`}
-        >
-          <div className="absolute inset-0 bg-cover bg-center z-0" style={{ backgroundImage: `url('https://i.pinimg.com/736x/dd/f9/32/ddf932385822e1753776a977f8cc7b5a.jpg')`, filter: 'contrast(1.2) brightness(0.6) sepia(1) hue-rotate(-50deg)', opacity: 0.4 }} />
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%] opacity-20 pointer-events-none z-20" />
-          <div className="absolute top-0 left-0 w-full h-1 bg-red-500/20 animate-scanline pointer-events-none z-20" />
 
-          <div className="flex justify-between items-center mb-6 border-b border-red-900 pb-2 flex-shrink-0 z-30 relative">
-            <span className="text-red-500 text-xs tracking-widest">TERMINAL V.2.0 // REG_SYS</span>
-            <button onClick={onClose} className="text-red-700 hover:text-red-400 transition-colors bg-red-900/10 p-1 rounded-full"><X size={20} /></button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto overflow-x-hidden relative z-10 custom-scrollbar pr-2">
-            {(stage === 0 || stage === 1) && (
-              <>
-                <div className="text-red-500 whitespace-pre-wrap min-h-[100px] text-sm md:text-base leading-relaxed mb-6">
-                  {text}{stage === 0 && <span className="animate-pulse">_</span>}
-                </div>
-                {stage === 1 && (
-                  <motion.form initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} onSubmit={handleSubmit} className="flex flex-col gap-8 pb-8">
-                    <div className="border border-red-800/50 p-6 bg-black/60 rounded-2xl backdrop-blur-md">
-                      <h3 className="text-red-400 mb-4 border-b border-red-800 inline-block uppercase tracking-wider font-bold">01. Team Identity</h3>
-                      <div className="flex flex-col gap-2">
-                        <label className="text-red-600 text-xs font-bold tracking-widest">TEAM DESIGNATION</label>
-                        <input required value={teamName} onChange={(e) => setTeamName(e.target.value)} type="text" className="bg-black/50 border border-red-800/60 text-red-300 px-4 py-3 outline-none focus:border-red-500 focus:shadow-[0_0_15px_rgba(229,9,20,0.3)] w-full font-mono uppercase tracking-widest rounded-xl transition-all" autoFocus placeholder="ENTER TEAM NAME..." />
-                      </div>
-                    </div>
-                    <div className="border border-red-800/50 p-6 bg-black/60 rounded-2xl backdrop-blur-md">
-                      <h3 className="text-red-400 mb-4 border-b border-red-800 inline-block uppercase tracking-wider font-bold">02. Squad Allocation</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {members.map((member, idx) => (
-                          <div key={idx} className="flex flex-col gap-3 p-4 border border-red-900/30 hover:border-red-600/50 transition-colors rounded-xl bg-black/40">
-                            <span className="text-red-500 font-bold text-xs bg-red-900/20 w-fit px-2 py-1 rounded">PLAYER 0{idx + 1}</span>
-                            <input required placeholder="FULL NAME" value={member.name} onChange={(e) => handleMemberChange(idx, 'name', e.target.value)} className="bg-transparent border-b border-red-900 text-red-300 px-2 py-2 outline-none focus:border-red-500 text-sm placeholder-red-900/50" />
-                            <input required placeholder="EMAIL ADDRESS" type="email" value={member.email} onChange={(e) => handleMemberChange(idx, 'email', e.target.value)} className="bg-transparent border-b border-red-900 text-red-300 px-2 py-2 outline-none focus:border-red-500 text-sm placeholder-red-900/50" />
-                            <input required placeholder="CONTACT NO." type="tel" value={member.phone} onChange={(e) => handleMemberChange(idx, 'phone', e.target.value)} className="bg-transparent border-b border-red-900 text-red-300 px-2 py-2 outline-none focus:border-red-500 text-sm placeholder-red-900/50" />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <button disabled={isSubmitting} type="submit" className="mt-4 bg-red-900/20 border border-red-600 text-red-400 py-4 hover:bg-red-600/30 hover:text-white hover:backdrop-blur-md transition-all duration-300 font-bold tracking-[0.2em] uppercase shadow-[0_0_20px_rgba(229,9,20,0.1)] hover:shadow-[0_0_30px_rgba(229,9,20,0.6)] rounded-xl backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed">
-                      {isSubmitting ? 'TRANSMITTING DATA...' : '> INITIATE HACK SEQUENCE'}
-                    </button>
-                  </motion.form>
-                )}
-              </>
-            )}
-            {stage === 2 && (
-              <div className="flex flex-col items-center justify-center min-h-full py-10 space-y-6 text-center select-none pb-20">
-                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full max-w-md border-b-2 border-red-500 pb-4 mb-4"><h2 className="text-2xl md:text-3xl text-red-400 font-black tracking-widest uppercase">SQUADRON: {teamName}</h2></motion.div>
-                 <div className="space-y-4 w-full max-w-lg">
-                  {members.map((m, i) => (
-                    <motion.div key={i} initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 + (i * 0.8), type: 'spring' }} className="flex items-center justify-between border-l-4 border-red-600 bg-red-900/40 backdrop-blur-md p-4 rounded-r-xl">
-                      <div className="text-left"><span className="block text-xs text-red-600 tracking-widest font-bold">PLAYER 0{i + 1}</span><span className="text-lg text-red-300 font-bold uppercase">{m.name || 'UNKNOWN'}</span></div>
-                      <motion.div initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5 + (i * 0.8) + 0.2 }} className="text-red-500 font-black tracking-widest bg-red-900/30 px-3 py-1 rounded border border-red-500/30 shadow-[0_0_10px_rgba(229,9,20,0.4)]">READY</motion.div>
-                    </motion.div>
-                  ))}
-                 </div>
-                  {isBreach && (
-                      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.1 }} className="mt-12 p-1 border border-red-900/50 bg-black relative w-full max-w-xl mx-auto">
-                        <motion.div animate={{ opacity: [0.2, 0.6, 0.2] }} transition={{ duration: 0.5, repeat: Infinity, ease: "easeInOut" }} className="absolute -inset-4 bg-red-600/40 blur-xl rounded-full z-0 pointer-events-none" />
-                        <div className="relative z-10 bg-black border border-red-600 p-8 overflow-hidden">
-                            <motion.div initial={{ x: 0, filter: "brightness(3)" }} animate={{ x: [-5, 5, -2, 2, 0], filter: "brightness(1)" }} transition={{ duration: 0.4 }} className="relative w-56 h-56 md:w-72 md:h-72 mx-auto mb-8 shadow-[0_0_50px_rgba(220,38,38,0.5)] border border-red-500/30">
-                                 <div className="w-full h-full relative overflow-hidden bg-black">
-                                     <motion.img src={vecnaImageUrl} alt="Vecna" animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} className="relative z-10 w-full h-full object-cover" style={{ filter: 'grayscale(100%) contrast(1.5) brightness(0.9)' }} />
-                                     <div className="absolute inset-0 z-20 bg-red-700 mix-blend-multiply opacity-80 pointer-events-none" />
-                                     <div className="absolute inset-0 z-20 bg-red-500 mix-blend-overlay opacity-40 pointer-events-none" />
-                                     <motion.div animate={{ x: [-2, 2, 0], opacity: [0, 0.8, 0] }} transition={{ duration: 0.2, repeat: Infinity, repeatDelay: 3 }} className="absolute inset-0 z-40 bg-red-600 mix-blend-screen opacity-50" style={{ backgroundImage: `url('${vecnaImageUrl}')`, backgroundSize: 'cover' }} />
-                                 </div>
-                            </motion.div>
-                            <h3 className="text-red-600 font-black text-3xl md:text-5xl uppercase tracking-widest mb-4 drop-shadow-[0_0_10px_rgba(220,38,38,0.8)] font-benguiat leading-none">TARGET LOCKED</h3>
-                            <div className="h-px w-full bg-gradient-to-r from-transparent via-red-600 to-transparent mb-4 opacity-50" />
-                            <p className="text-red-400 font-mono text-sm tracking-[0.2em] animate-pulse">THREAT LEVEL: OMEGA <br/><span className="text-white">INITIATING CONTAINMENT PROTOCOLS...</span></p>
-                        </div>
-                      </motion.div>
-                  )}
-                 <div ref={bottomRef} className="h-4" />
-                 <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 3.5 }} onClick={onClose} className="mt-8 text-red-600 hover:text-red-300 underline underline-offset-4 font-mono text-sm uppercase">[CLOSE TERMINAL]</motion.button>
+            <form onSubmit={handleLogin} className="space-y-6">
+              <div>
+                <label className="text-red-900 text-[10px] uppercase font-bold">Identity (Email)</label>
+                <input 
+                  type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-transparent border-b border-red-900 py-2 text-red-500 outline-none focus:border-red-500 transition-colors placeholder-red-900/30"
+                  placeholder="name@fcrit.edu"
+                />
               </div>
-            )}
-          </div>
-        </motion.div>
+              <div>
+                <label className="text-red-900 text-[10px] uppercase font-bold">Access Key (Password)</label>
+                <input 
+                  type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
+                  className="w-full bg-transparent border-b border-red-900 py-2 text-red-500 outline-none focus:border-red-500 transition-colors placeholder-red-900/30"
+                  placeholder="••••••••"
+                />
+              </div>
+              
+              {authError && <p className="text-red-600 text-[10px] font-mono animate-pulse">{authError}</p>}
+
+              <button 
+                disabled={isSubmitting}
+                className="w-full py-4 bg-red-950/20 border border-red-600 text-red-500 font-tech uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all disabled:opacity-50"
+              >
+                {isSubmitting ? "VERIFYING..." : "GRANT ACCESS"}
+              </button>
+            </form>
+          </motion.div>
+        )}
+
+        {/* --- STAGE >= 0: THE TERMINAL UI --- */}
+        {stage >= 0 && (
+          <>
+            {/* VECNA FULL SCREEN SCARE OVERLAY */}
+            <AnimatePresence>
+              {isBreach && (
+                <motion.div 
+                  initial={{ opacity: 0 }} 
+                  animate={{ opacity: 1 }} 
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-[200] flex items-center justify-center bg-red-950 overflow-hidden"
+                >
+                  <motion.div 
+                    animate={{ 
+                      x: [-2, 2, -2, 2, 0],
+                      filter: ["contrast(1.5) brightness(1)", "contrast(3) brightness(1.5)", "contrast(1.5) brightness(1)"] 
+                    }}
+                    transition={{ repeat: Infinity, duration: 0.1 }}
+                    className="absolute inset-0 grayscale sepia hue-rotate-[300deg] brightness-50"
+                    style={{ 
+                      backgroundImage: `url('${vecnaImageUrl}')`, 
+                      backgroundSize: 'cover', 
+                      backgroundPosition: 'center' 
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black opacity-80" />
+                  
+                  <div className="relative z-20 text-center p-4">
+                    <motion.h2 
+                      animate={{ scale: [1, 1.1, 1] }} 
+                      transition={{ repeat: Infinity, duration: 0.5 }}
+                      className="text-6xl md:text-9xl font-black font-benguiat text-red-600 drop-shadow-[0_0_30px_rgba(255,0,0,1)]"
+                    >
+                      YOU ARE NEXT
+                    </motion.h2>
+
+                    <p className="text-white font-tech tracking-[0.5em] mt-8 text-xl animate-pulse uppercase">
+                      CONTAINMENT BREACHED // CLOCK IS TICKING
+                    </p>
+
+                    {/* Comic Style WhatsApp Invite */}
+                    <motion.div
+                      initial={{ y: 50, opacity: 0, scale: 0.8 }}
+                      animate={{ y: 0, opacity: 1, scale: 1 }}
+                      transition={{ delay: 1.5, type: "spring", bounce: 0.6 }}
+                      className="mt-12 relative"
+                    >
+                      {/* Comic book burst background */}
+                      <div className="absolute inset-0 bg-yellow-400 transform rotate-3 rounded-2xl scale-110 opacity-20 blur-md"></div>
+                      
+                      {/* Speech bubble arrow pointing up to Vecna */}
+                      <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[20px] border-l-transparent border-r-[20px] border-r-transparent border-b-[20px] border-b-white"></div>
+                      
+                      <div className="relative bg-white text-black p-6 rounded-2xl border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] max-w-md mx-auto">
+                        {/* Comic book "ZAP" decoration */}
+                        <motion.div
+                          animate={{ rotate: [0, -5, 5, 0] }}
+                          transition={{ repeat: Infinity, duration: 0.5 }}
+                          className="absolute -top-4 -right-4 bg-red-600 text-white font-black text-sm px-3 py-1 rotate-12 border-3 border-black rounded-full"
+                        >
+                          JOIN NOW!
+                        </motion.div>
+
+                        <p className="font-black text-2xl mb-4 uppercase" style={{
+                          textShadow: '3px 3px 0px #dc2626'
+                        }}>
+                          "QUICK! JOIN THE PARTY!"
+                        </p>
+                        
+                        <p className="text-sm font-bold mb-6 text-gray-700">
+                          Team Leader, your squad needs you in the WhatsApp HQ. The real mission starts NOW! ⚡
+                        </p>
+
+                        {/* WhatsApp Button */}
+                        <motion.a
+                          href="https://chat.whatsapp.com/F8AbHG5SUQAIbdYp9k6loQ?mode=gi_t"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="block w-full py-4 bg-green-500 text-white font-black text-lg rounded-xl uppercase tracking-wider shadow-lg hover:bg-green-600 transition-all border-4 border-green-700 relative overflow-hidden group"
+                        >
+                          <span className="relative z-10 flex items-center justify-center gap-3">
+                            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                            </svg>
+                            Enter the Upside Down
+                          </span>
+                        </motion.a>
+
+                        {/* Comic book style bottom text */}
+                        <p className="text-[10px] font-bold text-gray-600 mt-3 uppercase tracking-widest">
+                          💀 Don't keep Vecna waiting... 💀
+                        </p>
+                      </div>
+                    </motion.div>
+                    
+                    <button 
+                      onClick={onClose}
+                      className="mt-12 px-8 py-4 border-2 border-red-600 text-red-600 font-bold hover:bg-red-600 hover:text-white transition-all rounded-full tracking-widest uppercase"
+                    >
+                      ABORT MISSION [ESC]
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <motion.div 
+              animate={isBreach ? { scale: 0.8, filter: "blur(10px)" } : {}}
+              className="w-full max-w-6xl bg-black border border-red-800 shadow-[0_0_80px_rgba(229,9,20,0.3)] rounded-3xl p-6 font-mono relative overflow-hidden h-[90vh] flex flex-col z-10"
+            >
+              {/* Background */}
+              <div 
+                className="absolute inset-0 bg-cover bg-center z-0" 
+                style={{ 
+                  backgroundImage: `url('${terminalBgUrl}')`, 
+                  filter: 'contrast(1.2) brightness(0.6) sepia(1) hue-rotate(-50deg)', 
+                  opacity: 0.4 
+                }} 
+              />
+              <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%] opacity-20 pointer-events-none z-20" />
+              <div className="absolute top-0 left-0 w-full h-1 bg-red-500/20 animate-scanline pointer-events-none z-20" />
+
+              {/* TOP BAR */}
+              <div className="flex justify-between items-center mb-6 border-b border-red-900 pb-2 z-30 relative">
+                <span className="text-red-500 text-xs tracking-widest">TERMINAL V.2.0 // SQUAD_CONFIG</span>
+                <button onClick={onClose} className="text-red-700 hover:text-red-400 p-1 rounded-full"><X size={20} /></button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar relative z-30">
+                {stage < 2 && (
+                  <>
+                    <div className="text-red-500 whitespace-pre-wrap min-h-[80px] text-sm md:text-base leading-relaxed mb-6 italic">
+                      {text}{stage === 0 && <span className="animate-pulse">_</span>}
+                    </div>
+                    {stage === 1 && (
+                      <motion.form initial={{ opacity: 0 }} animate={{ opacity: 1 }} onSubmit={handleSubmit} className="space-y-8">
+                        {/* TEAM NAME SECTION - Full width now */}
+                        <div className="bg-red-950/20 border border-red-900/40 p-6 rounded-2xl">
+                          <label className="text-red-600 text-xs font-bold tracking-[0.3em] block mb-3 uppercase">Team Name</label>
+                          <input
+  required
+  value={teamName}
+  onChange={(e) => setTeamName(e.target.value)}
+  type="text"
+  className="bg-transparent border-b-2 border-red-900 focus:border-red-500 w-full py-2 text-xl outline-none text-red-400 placeholder-red-500/70 uppercase tracking-widest transition-colors"
+  placeholder="NAME YOUR SQUAD..."
+/>
+
+                        </div>
+
+                        {/* MEMBER CARDS */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {members.map((member, idx) => (
+                            <div key={idx} className="p-4 border border-red-900/30 rounded-xl bg-black/80 relative group hover:border-red-900/80 transition-colors">
+                              <div className="flex justify-between items-center mb-4">
+                                <span className="text-[10px] bg-red-900/30 text-red-500 px-2 py-0.5 rounded uppercase font-bold tracking-widest">Operator 0{idx + 1}</span>
+                                {members.length > 3 && (
+                                    <button type="button" onClick={() => removeMember(idx)} className="text-red-900 hover:text-red-500 transition-colors"><Trash2 size={14}/></button>
+                                )}
+                              </div>
+                              <div className="space-y-3">
+                                <input required placeholder="FULL NAME" value={member.name} onChange={(e) => handleMemberChange(idx, 'name', e.target.value)} className="w-full bg-transparent border-b border-red-900/50 py-1 text-sm text-red-300 outline-none focus:border-red-500" />
+                                <input required placeholder="EMAIL" type="email" value={member.email} onChange={(e) => handleMemberChange(idx, 'email', e.target.value)} className="w-full bg-transparent border-b border-red-900/50 py-1 text-sm text-red-300 outline-none focus:border-red-500" />
+                                <input required placeholder="PHONE" type="tel" value={member.phone} onChange={(e) => handleMemberChange(idx, 'phone', e.target.value)} className="w-full bg-transparent border-b border-red-900/50 py-1 text-sm text-red-300 outline-none focus:border-red-500" />
+                              </div>
+                            </div>
+                          ))}
+                          
+                          {members.length < 4 && (
+                            <button type="button" onClick={addMember}className="border-2 border-dashed border-red-700 rounded-md flex items-center justify-center bg-black"
+>
+                              <Plus size={20} />
+                              <span className="font-tech text-xs tracking-widest uppercase">Add 4th Member</span>
+                            </button>
+                          )}
+                        </div>
+
+                        {/* QR CODE & PAYMENT UPLOAD SECTION */}
+                        <div className="space-y-4">
+                          {/* QR Code Display */}
+                         <div className="p-6 bg-black border border-red-800 rounded-md flex flex-col items-center">
+
+                            <h3 className="text-red-500 text-xs font-bold tracking-[0.3em] uppercase mb-4">Payment QR Code</h3>
+                            <div className="bg-white p-4 rounded-xl">
+                              {/* Replace this URL with your actual QR code image */}
+                              <img 
+                                src="qr.jpeg" 
+                                alt="Payment QR Code" 
+                                className="w-64 h-64 object-contain"
+                              />
+                            </div>
+                            <p className="text-red-400 text-[10px] font-mono text-center mt-4 uppercase">
+                              Scan to pay • Then upload screenshot below
+                            </p>
+                          </div>
+
+                          {/* File Upload Section */}
+                         <div className="p-6 border-2 border-dashed border-red-700 rounded-md bg-black flex flex-col items-center">
+
+                            <label className="cursor-pointer flex flex-col items-center gap-3 w-full">
+                              <Upload className={imageBlob ? "text-green-500" : "text-red-600"} size={48} />
+                              <span className="text-red-500 text-xs font-mono uppercase tracking-widest text-center">
+                                {imageBlob ? "✓ SCREENSHOT ATTACHED" : "UPLOAD PAYMENT PROOF (PNG/JPG)"}
+                              </span>
+                              <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                            </label>
+                            
+                            {/* File naming instruction */}
+                            <div className="mt-4 p-3 bg-red-900/20 border border-red-800/40 rounded-lg w-full">
+                              <p className="text-red-400 text-[10px] font-mono text-center uppercase tracking-wide">
+                                📝 Rename your file as: <span className="text-red-300 font-bold">TeamID_TeamLeader</span>
+                              </p>
+                              <p className="text-red-600 text-[9px] font-mono text-center mt-1">
+                                Example: TEAM01_JohnDoe.png
+                              </p>
+                            </div>
+                            
+                            {imageBlob && (
+                              <div className="mt-4 flex items-center gap-2">
+                                <CheckCircle size={16} className="text-green-500" />
+                                <span className="text-green-500 text-[10px] font-mono">PAYMENT VERIFICATION READY</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <button disabled={isSubmitting} className="w-full py-5 bg-red-600/10 border border-red-600 text-red-500 font-bold tracking-[0.3em] uppercase hover:bg-red-600 hover:text-white transition-all disabled:opacity-50 hover:shadow-[0_0_30px_rgba(220,38,38,0.4)]">
+                          {isSubmitting ? "ENCRYPTING DATA..." : ">> INITIATE LOCKDOWN"}
+                        </button>
+                      </motion.form>
+                    )}
+                  </>
+                )}
+
+                {stage === 2 && (
+                  <div className="flex flex-col items-center justify-center py-10 space-y-6">
+                    <div className="text-center mb-8">
+                      <h2 className="text-4xl font-benguiat text-red-600 uppercase mb-2 drop-shadow-lg">Team {teamName}</h2>
+                      <p className="text-gray-500 text-xs tracking-[0.4em]">VERIFYING SQUAD READINESS...</p>
+                    </div>
+
+                    <div className="w-full max-w-md space-y-4">
+                      {members.map((m, i) => (
+                        <motion.div 
+                          key={i} 
+                          initial={{ x: -100, opacity: 0 }} 
+                          animate={{ x: 0, opacity: 1 }} 
+                          transition={{ delay: i * 0.8 }}
+                          className="flex items-center justify-between p-4 bg-red-900/20 border-l-4 border-red-600"
+                        >
+                          <div className="text-left">
+                            <p className="text-[10px] text-red-600 font-bold uppercase">Member {i+1}</p>
+                            <p className="text-red-200 font-bold tracking-wider">{m.name.toUpperCase()}</p>
+                          </div>
+                          <div className="text-green-500 text-xs font-tech animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.4)]">[ ONLINE ]</div>
+                        </motion.div>
+                      ))}
+                    </div>
+                    <div ref={bottomRef} className="h-20" />
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
         )}
       </motion.div>
     </AnimatePresence>
   );
 };
-
 // --- DOMAIN CAROUSEL ---
 
 // --- DOMAIN CONFIGURATION ---
@@ -913,7 +1224,6 @@ const tracks = [
     
   }, 
 ];
-
 // --- UPGRADED "RIFT" CARD ---
 // --- FIXED FLIP CARD (Original Width Restored) ---
 const TrackCard = ({ image, title, domain, ps1, ps2, position, onClick }: any) => {
@@ -955,152 +1265,156 @@ const TrackCard = ({ image, title, domain, ps1, ps2, position, onClick }: any) =
     return "hidden";
   };
 
-  return (
+ return (
+  <motion.div
+    animate={getVariant()}
+    variants={variants}
+    transition={{ duration: 0.6, ease: "circOut" }}
+    // Responsive width/height: h-auto on mobile allows the card to grow with the text
+    className={`absolute top-1/2 left-1/2 w-[90vw] md:w-[600px] h-[550px] md:h-[600px] -translate-x-1/2 -translate-y-1/2 rounded-xl cursor-pointer perspective-1000`}
+  >
+    {/* FLIP CONTAINER */}
     <motion.div
-      animate={getVariant()}
-      variants={variants}
-      transition={{ duration: 0.6, ease: "circOut" }}
-      // --- RESTORED ORIGINAL WIDTH & HEIGHT HERE ---
-      className={`absolute top-1/2 left-1/2 w-[340px] md:w-[600px] h-[450px] md:h-[500px] -translate-x-1/2 -translate-y-1/2 rounded-xl cursor-pointer perspective-1000`}
+      initial={false}
+      animate={{ rotateY: isFlipped ? 180 : 0 }}
+      transition={{ duration: 0.6 }} // Fixed: removed invalid animationDirection
+      className="w-full h-full relative"
+      style={{ transformStyle: "preserve-3d" }}
+      onClick={(e) => {
+        if (isActive) {
+          // @ts-ignore
+          if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'A') {
+            setIsFlipped(!isFlipped);
+          }
+        } else {
+          onClick();
+        }
+      }}
     >
-      {/* FLIP CONTAINER */}
-      <motion.div
-        initial={false}
-        animate={{ rotateY: isFlipped ? 180 : 0 }}
-        //transition={{ duration: 0.6, animationDirection: "normal" }}
-        className="w-full h-full relative"
-        style={{ transformStyle: "preserve-3d" }}
-        onClick={(e) => {
-             if(isActive) {
-                 // @ts-ignore
-                 if(e.target.tagName !== 'BUTTON') setIsFlipped(!isFlipped);
-             } else {
-                 onClick(); 
-             }
+      {/* === FRONT FACE === */}
+      <div
+        className="absolute inset-0 w-full h-full rounded-xl overflow-hidden border-2 border-gray-800 bg-black"
+        style={{ backfaceVisibility: 'hidden' }}
+      >
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: `url(${image})`,
+            filter: isActive ? 'grayscale(0%) contrast(1.1)' : 'grayscale(100%) contrast(1.5) brightness(0.5)'
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+
+        {isActive && !isFlipped && (
+          <div className="absolute top-0 left-0 w-full h-1 bg-red-500/50 shadow-[0_0_15px_red] animate-[scanline_3s_linear_infinite]" />
+        )}
+
+        <div className="absolute bottom-0 left-0 w-full p-6 md:p-8 flex flex-col gap-2">
+          <div className="bg-red-900/80 text-red-200 text-xs font-tech w-fit px-2 py-1 rounded border border-red-500/50 backdrop-blur-md">
+            {domain}
+          </div>
+          <h3 className="text-3xl md:text-5xl font-black font-benguiat text-white uppercase drop-shadow-lg leading-none">
+            {title}
+          </h3>
+          {isActive && (
+            <div className="mt-4 flex items-center gap-2 text-red-400 font-mono text-xs animate-pulse">
+              <span>CLICK TO DECLASSIFY FILE</span>
+              <ArrowRight size={14} />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* === BACK FACE === */}
+      <div
+        className="absolute inset-0 w-full h-full rounded-xl overflow-hidden border-2 border-red-600 bg-black p-6 md:p-8 flex flex-col"
+        style={{
+          backfaceVisibility: 'hidden',
+          transform: 'rotateY(180deg)',
+          backgroundImage: "url('https://www.transparenttextures.com/patterns/cubes.png')"
         }}
       >
-        {/* === FRONT FACE === */}
-        <div 
-            className="absolute inset-0 w-full h-full backface-hidden rounded-xl overflow-hidden border-2 border-gray-800 bg-black"
-            style={{ backfaceVisibility: 'hidden' }}
-        >
-             <div 
-                className="absolute inset-0 bg-cover bg-center"
-                style={{ 
-                    backgroundImage: `url(${image})`,
-                    filter: isActive ? 'grayscale(0%) contrast(1.1)' : 'grayscale(100%) contrast(1.5) brightness(0.5)'
-                }}
-             />
-             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
-             
-             {isActive && !isFlipped && (
-                 <div className="absolute top-0 left-0 w-full h-1 bg-red-500/50 shadow-[0_0_15px_red] animate-[scanline_3s_linear_infinite]" />
-             )}
+        <div className="absolute inset-0 bg-red-900/10 pointer-events-none" />
 
-             <div className="absolute bottom-0 left-0 w-full p-8 flex flex-col gap-2">
-                 <div className="bg-red-900/80 text-red-200 text-xs font-tech w-fit px-2 py-1 rounded border border-red-500/50 backdrop-blur-md">
-                    {domain}
-                 </div>
-                 <h3 className="text-4xl md:text-5xl font-black font-benguiat text-white uppercase drop-shadow-lg leading-none">
-                    {title}
-                 </h3>
-                 {isActive && (
-                    <div className="mt-4 flex items-center gap-2 text-red-400 font-mono text-xs animate-pulse">
-                        <span>CLICK TO DECLASSIFY FILE</span>
-                        <ArrowRight size={14} />
-                    </div>
-                 )}
-             </div>
+        {/* HEADER */}
+        <div className="flex justify-between items-center border-b border-red-800 pb-3 mb-4 z-10 shrink-0">
+          <span className="text-red-500 font-tech tracking-[0.3em] text-[10px] md:text-xs uppercase">TOP SECRET // {domain}</span>
+          <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_10px_red]" />
         </div>
 
-        {/* === BACK FACE === */}
-        <div 
-            className="absolute inset-0 w-full h-full backface-hidden rounded-xl overflow-hidden border-2 border-red-600 bg-black p-8 flex flex-col"
-            style={{ 
-                backfaceVisibility: 'hidden', 
-                transform: 'rotateY(180deg)',
-                backgroundImage: "url('https://www.transparenttextures.com/patterns/cubes.png')"
-            }}
-        >
-            <div className="absolute inset-0 bg-red-900/10 pointer-events-none" />
-            
-            <div className="flex justify-between items-center border-b border-red-800 pb-4 mb-4 z-10">
-                <span className="text-red-500 font-tech tracking-[0.3em] text-xs uppercase">TOP SECRET // {domain}</span>
-                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_10px_red]" />
+        {/* SCROLLABLE CONTENT AREA */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar relative z-10 pr-2 space-y-4">
+          <h3 className="text-xl md:text-2xl font-benguiat text-white uppercase">{title}</h3>
+
+          {/* PS TOGGLE SWITCH */}
+          {!isOpenInnovation && (
+            <div className="flex w-full border border-red-900 rounded overflow-hidden shrink-0">
+              <button
+                onClick={() => setShowPs2(false)}
+                className={`flex-1 py-2 text-[10px] font-bold tracking-widest uppercase transition-all ${!showPs2 ? 'bg-red-600 text-white' : 'bg-black text-red-500 hover:bg-red-900/20'}`}
+              >
+                Problem Statement 1
+              </button>
+              <div className="w-px bg-red-900" />
+              <button
+                onClick={() => setShowPs2(true)}
+                className={`flex-1 py-2 text-[10px] font-bold tracking-widest uppercase transition-all ${showPs2 ? 'bg-red-600 text-white' : 'bg-black text-red-500 hover:bg-red-900/20'}`}
+              >
+                Problem Statement 2
+              </button>
             </div>
+          )}
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar relative z-10 pr-2">
-                 <h3 className="text-2xl font-benguiat text-white mb-6 uppercase">{title}</h3>
+          {/* MAIN DESCRIPTION BOX */}
+          <div className="bg-black/50 border border-red-900/50 p-4 md:p-6 rounded text-gray-300 font-mono text-xs md:text-sm leading-relaxed">
+            {isOpenInnovation ? (
+              <div className="text-center py-4">
+                <p className="text-red-400 font-bold tracking-widest mb-2">PROTOCOL: UNRESTRICTED</p>
+                <p className="opacity-70 italic text-[10px]">Identifying constraints... NONE FOUND.</p>
+                <p className="mt-4 text-white uppercase font-bold">Innovate without boundaries.</p>
+              </div>
+            ) : (
+              <motion.div
+                key={showPs2 ? 'ps2' : 'ps1'}
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <span className="text-red-500 font-bold block mb-2 text-[10px] tracking-widest uppercase">
+                  {showPs2 ? ">> Secondary Objective:" : ">> Primary Objective:"}
+                </span>
+                {showPs2 ? ps2 : ps1}
+              </motion.div>
+            )}
 
-                 {!isOpenInnovation && (
-                    <div className="flex w-full mb-6 border border-red-900 rounded overflow-hidden">
-                        <button 
-                           onClick={() => setShowPs2(false)}
-                           className={`flex-1 py-3 text-xs font-bold tracking-widest uppercase transition-all ${!showPs2 ? 'bg-red-600 text-white' : 'bg-black text-red-500 hover:bg-red-900/20'}`}
-                        >
-                           Problem Statement 1
-                        </button>
-                        <div className="w-px bg-red-900" />
-                        <button 
-                           onClick={() => setShowPs2(true)}
-                           className={`flex-1 py-3 text-xs font-bold tracking-widest uppercase transition-all ${showPs2 ? 'bg-red-600 text-white' : 'bg-black text-red-500 hover:bg-red-900/20'}`}
-                        >
-                           Problem Statement 2
-                        </button>
-                    </div>
-                 )}
-
-                 <div className="bg-black/50 border border-red-900/50 p-6 rounded text-gray-300 font-mono text-sm md:text-base leading-relaxed">
-                     {isOpenInnovation ? (
-                        <div className="text-center py-8">
-                            
-                            <p className="text-red-400 font-bold tracking-widest mb-4">PROTOCOL: UNRESTRICTED</p>
-                            <p>Identifying constraints... NONE FOUND.</p>
-                            <p className="mt-4 text-white">Innovate without boundaries.</p>
-                        </div>
-                     ) : (
-                        <motion.div
-                           key={showPs2 ? 'ps2' : 'ps1'}
-                           initial={{ opacity: 0, x: 10 }}
-                           animate={{ opacity: 1, x: 0 }}
-                           transition={{ duration: 0.3 }}
-                        >
-                            <span className="text-red-500 font-bold block mb-2 text-xs tracking-widest">
-                                {showPs2 ? ">> SECONDARY OBJECTIVE:" : ">> PRIMARY OBJECTIVE:"}
-                            </span>
-                            {showPs2 ? ps2 : ps1}
-                        </motion.div>
-                     )}
-                 </div>
-                 <p className="text-gray-300 font-tech text-sm leading-relaxed">
-  {domain.abstract} {/* Your existing abstract text */}
-  
-  <span className="block mt-4 text-red-500/80 border-t border-red-900/30 pt-3 italic">
-    [!] SYSTEM NOTE: Data truncated. Decrypt full mission brief and 
-    technical specs at the 
-    <a 
-      href="https://unstop.com/o/21U5F3u?lb=xQWvaErs&utm_medium=Share&utm_source=floydcar21615&utm_campaign=Online_coding_challenge" 
-      target="_blank" 
-      className="ml-1 underline decoration-red-600 underline-offset-4 hover:text-red-400"
-    >
-      UNSTOP TERMINAL &gt;_
-    </a>
-  </span>
-</p>
+            {/* INTEGRATED SYSTEM NOTE AND LINK */}
+            <div className="mt-6 pt-4 border-t border-red-900/30">
+              <p className="text-red-500/80 font-tech text-[10px] md:text-xs leading-relaxed italic">
+                [!] SYSTEM NOTE: DATA TRUNCATED. DECRYPT FULL MISSION BRIEF AND TECHNICAL SPECS AT THE 
+                <a
+                  href="https://unstop.com/o/21U5F3u?lb=xQWvaErs&utm_medium=Share&utm_source=floydcar21615&utm_campaign=Online_coding_challenge"
+                  target="_blank"
+                  rel="noreferrer"
+                 className="ml-1 underline decoration-red-600 underline-offset-4 hover:text-red-400"
+                >
+                  UNSTOP TERMINAL &gt;
+                </a>
+              </p>
             </div>
-            
-
-            <button 
-                onClick={() => setIsFlipped(false)}
-                className="mt-4 w-full py-3 border border-red-800 text-red-500 hover:bg-red-900/20 hover:text-white transition-colors font-tech uppercase tracking-widest text-xs z-10"
-            >
-                [ CLOSE FILE ]
-            </button>
+          </div>
         </div>
 
-      </motion.div>
+        {/* CLOSE BUTTON */}
+        <button
+          onClick={() => setIsFlipped(false)}
+          className="mt-4 w-full py-3 border border-red-800 text-red-500 hover:bg-red-600 hover:text-white transition-all font-tech uppercase tracking-widest text-[10px] z-10 shrink-0"
+        >
+          [ CLOSE FILE ]
+        </button>
+      </div>
     </motion.div>
-  );
+  </motion.div>
+);
 };
 
 // --- 3. DOMAIN CAROUSEL (Unchanged Logic, just passes new props) ---
